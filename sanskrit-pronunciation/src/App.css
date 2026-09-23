@@ -1,10 +1,32 @@
 /* =========================
-   GAME CARD
+   PAGE
+========================= */
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #fff3e0;
+  color: black;
+}
+
+.app {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px;
+  box-sizing: border-box;
+}
+
+
+/* =========================
+   MAIN GAME CARD
 ========================= */
 
 .game-card {
   width: 100%;
-  max-width: 600px;
+  max-width: 1100px;
   background: #ffffff;
   border-radius: 20px;
   padding: 40px;
@@ -78,6 +100,16 @@
   margin-bottom: 10px;
 }
 
+.progress {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: #e3f2fd;
+  color: #1976d2;
+  font-weight: bold;
+  font-size: 14px;
+}
+
 .current-score {
   display: inline-block;
   padding: 8px 16px;
@@ -90,8 +122,205 @@
 
 
 /* =========================
+   SANSKRIT WORD
+========================= */
+
+.sanskrit-word {
+  font-size: 42px;
+  font-weight: bold;
+  margin: 30px 0;
+  color: #4a4a4a;
+  background: #fff8e7;
+  padding: 25px;
+  border-radius: 15px;
+}
+
+
+/* =========================
+   BUTTON BASE
+========================= */
+
+button {
+  border: none;
+  border-radius: 10px;
+  padding: 12px 22px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+
+/* =========================
+   LISTEN BUTTON
+========================= */
+
+.listen-button {
+  background: #ffe0b2;
+  color: #8a4b08;
+  margin: 8px;
+}
+
+.listen-button:hover {
+  background: #ffcc80;
+  transform: translateY(-2px);
+}
+
+
+/* =========================
+   SPEAK BUTTON
+========================= */
+
+.speak-button {
+  background: #dcedc8;
+  color: #33691e;
+  margin: 8px;
+}
+
+.speak-button:hover {
+  background: #c5e1a5;
+  transform: translateY(-2px);
+}
+
+
+/* =========================
+   TRANSCRIPT
+========================= */
+
+.result {
+  margin-top: 25px;
+}
+
+.result h2 {
+  color: #2f5d8c;
+}
+
+.transcript {
+  margin-top: 25px;
+  background: #f3e5f5;
+  color: #6a1b9a !important;
+  padding: 15px;
+  border-radius: 12px;
+  font-size: 16px;
+}
+
+.placeholder {
+  color: #999999 !important;
+}
+
+
+/* =========================
+   ERROR
+========================= */
+
+.error {
+  margin-top: 15px;
+  background: #ffebee;
+  color: #c62828 !important;
+  padding: 12px;
+  border-radius: 10px;
+}
+
+
+/* =========================
+   PRONUNCIATION POPUP
+========================= */
+
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.popup {
+  background: white;
+  width: 90%;
+  max-width: 400px;
+  padding: 35px;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.15);
+}
+
+.popup.great {
+  border-top: 8px solid #81c784;
+}
+
+.popup.almost {
+  border-top: 8px solid #ffd54f;
+}
+
+.popup.try-again {
+  border-top: 8px solid #ef9a9a;
+}
+
+.popup h2 {
+  margin-bottom: 10px;
+  color: #2f5d8c;
+}
+
+.popup-icon {
+  font-size: 45px;
+  margin-bottom: 10px;
+}
+
+.score {
+  font-size: 32px;
+  font-weight: bold;
+  color: #2f5d8c;
+  margin: 15px 0;
+}
+
+.spoken-result {
+  margin-bottom: 8px;
+}
+
+.popup-word {
+  background: #f3e5f5;
+  color: #6a1b9a;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+
+/* =========================
+   POPUP BUTTON
+========================= */
+
+.close-button {
+  background: #64b5f6;
+  color: white;
+  margin-top: 10px;
+}
+
+.close-button:hover {
+  background: #1976d2;
+  transform: translateY(-2px);
+}
+
+
+/* =========================
    COMPLETION SCREEN
 ========================= */
+
+.completion-icon {
+  font-size: 70px;
+  margin-bottom: 15px;
+}
 
 .final-stats {
   display: flex;
@@ -253,4 +482,44 @@
   color: #c62828;
   padding: 10px;
   border-radius: 8px;
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 700px) {
+
+  .app {
+    padding: 15px;
+  }
+
+  .game-card {
+    padding: 25px 20px;
+  }
+
+  .game-info {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .sanskrit-word {
+    font-size: 32px;
+    padding: 18px;
+  }
+
+  .final-stats {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .stat-box {
+    width: 80%;
+  }
+
+  .logged-in-area {
+    flex-direction: column;
+    gap: 5px;
+  }
 }
