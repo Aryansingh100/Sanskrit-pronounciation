@@ -107,6 +107,7 @@ function App() {
         "बहुत नाम के",
         "भगत नाम की",
         "बहुत नमकम",
+        "भगत नाम के",
         "bhavatah nama kim",
         "bhavataha nama kim",
         "bhavato nama kim"
