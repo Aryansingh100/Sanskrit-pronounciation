@@ -1,7 +1,13 @@
 import { useState } from "react";
 import "./App.css";
 
+import { useAuth } from "./hooks/useAuth";
+import { useLeaderboard } from "./hooks/useLeaderboard";
+import AuthPanel from "./components/auth/AuthPanel";
+
 function App() {
+  const { user, signOutUser } = useAuth();
+
   const [currentWord, setCurrentWord] = useState(0);
   const [transcript, setTranscript] = useState("");
   const [isListening, setIsListening] = useState(false);
@@ -9,7 +15,19 @@ function App() {
   const [result, setResult] = useState(null);
   const [completed, setCompleted] = useState(false);
 
-  // WORDS
+  // Leaderboard and game score
+  const [score, setScore] = useState(0);
+  const [gameStartTime, setGameStartTime] = useState(() => Date.now());
+  const [timePlayedInSeconds, setTimePlayedInSeconds] = useState(0);
+
+  // Authentication popup
+  const [showAuth, setShowAuth] = useState(false);
+
+  const {
+    leaderboardMessage,
+    submittingScore,
+    submitLeaderboardScore
+  } = useLeaderboard(user);
 
   const words = [
     {
@@ -27,7 +45,6 @@ function App() {
         "su prabhat"
       ]
     },
-
     {
       sanskrit: "धन्यवादः",
       meaning: "Thank you",
@@ -41,7 +58,6 @@ function App() {
         "dhanyavad"
       ]
     },
-
     {
       sanskrit: "स्वागतम् ।",
       meaning: "Welcome",
@@ -58,7 +74,6 @@ function App() {
         "swāgatam"
       ]
     },
-
     {
       sanskrit: "चिन्ता मास्तु ।",
       meaning: "Don't worry",
@@ -69,16 +84,14 @@ function App() {
         "चिंता मास्तु",
         "चिन्ता मास् तु",
         "चिंता मास् तु",
-        "चिन्ता मास्तु",
-          "चिंता वास्तु",
-          "चिंता मास्टर",
+        "चिंता वास्तु",
+        "चिंता मास्टर",
         "chinta mastu",
         "chintā māstu",
         "chinta maastu",
         "chinta mastoo"
       ]
     },
-
     {
       sanskrit: "भवतः नाम किं ?",
       meaning: "What is your name? (masc.)",
@@ -90,31 +103,26 @@ function App() {
         "भवतः नाम किम",
         "भवतो नाम किं",
         "भवतो नाम किम्",
-          "भगत नाम किम",
-          "बहुत नाम के",
-          "भगत नाम की",
-          "बहुत नमकम",
+        "भगत नाम किम",
+        "बहुत नाम के",
+        "भगत नाम की",
+        "बहुत नमकम",
         "bhavatah nama kim",
         "bhavataha nama kim",
         "bhavato nama kim"
       ]
     }
-
   ];
 
   const word = words[currentWord];
 
-  // NORMALIZE TEXT
-
   const normalizeText = (text) => {
     return text
-      .trim()
-      .toLowerCase()
-      .replace(/[।.,!?]/g, "")
-      .replace(/\s+/g, " ");
+        .trim()
+        .toLowerCase()
+        .replace(/[।.,!?]/g, "")
+        .replace(/\s+/g, " ");
   };
-
-  // MP3 AUDIO
 
   const playAudio = () => {
     setError("");
@@ -123,23 +131,18 @@ function App() {
       const audio = new Audio(word.audio);
 
       audio.play().catch(() => {
-        setError(
-          "The audio could not be played."
-        );
+        setError("The audio could not be played.");
       });
     } catch (error) {
       setError("There was a problem playing the audio.");
     }
   };
 
-  // CHECK PRONUNCIATION
-
   const judgePronunciation = (spokenText) => {
     const normalizedSpeech = normalizeText(spokenText);
 
     const isCorrect = word.accepted.some(
-      (answer) =>
-        normalizeText(answer) === normalizedSpeech
+        (answer) => normalizeText(answer) === normalizedSpeech
     );
 
     if (isCorrect) {
@@ -155,14 +158,11 @@ function App() {
     return {
       level: "try-again",
       title: "Try Again",
-      message:
-        "Listen carefully and try the phrase again.",
+      message: "Listen carefully and try the phrase again.",
       icon: "🔴",
       score: 0
     };
   };
-
-  // SPEECH RECOGNITION
 
   const startListening = () => {
     setError("");
@@ -170,12 +170,12 @@ function App() {
     setResult(null);
 
     const SpeechRecognition =
-      window.SpeechRecognition ||
-      window.webkitSpeechRecognition;
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
       setError(
-        "Speech recognition is not supported in this browser."
+          "Speech recognition is not supported in this browser."
       );
       return;
     }
@@ -183,7 +183,6 @@ function App() {
     const recognition = new SpeechRecognition();
 
     recognition.lang = word.recognitionLang || "hi-IN";
-
     recognition.continuous = false;
     recognition.interimResults = false;
 
@@ -192,30 +191,26 @@ function App() {
     };
 
     recognition.onresult = (event) => {
-      const spokenText =
-        event.results[0][0].transcript;
+      const spokenText = event.results[0][0].transcript;
 
-      console.log(
-        "Browser recognized:",
-        spokenText
-      );
+      console.log("Browser recognized:", spokenText);
 
       setTranscript(spokenText);
 
       const pronunciationResult =
-        judgePronunciation(spokenText);
+          judgePronunciation(spokenText);
 
       setResult(pronunciationResult);
     };
 
     recognition.onerror = (event) => {
       console.log(
-        "Speech recognition error:",
-        event.error
+          "Speech recognition error:",
+          event.error
       );
 
       setError(
-        "We could not understand your speech. Please try again."
+          "We could not understand your speech. Please try again."
       );
 
       setIsListening(false);
@@ -229,24 +224,32 @@ function App() {
   };
 
   const continueToNextWord = () => {
-    // Continue if the user got 100%
     if (!result || result.score !== 100) {
       return;
     }
 
+    // Each completed level is worth 200 points.
+    const pointsEarned = 200;
+    const newScore = score + pointsEarned;
+
+    setScore(newScore);
+
     if (currentWord < words.length - 1) {
       setCurrentWord(currentWord + 1);
-
       setTranscript("");
       setResult(null);
       setError("");
     } else {
+      // Final level completed
+      const elapsedSeconds = Math.floor(
+          (Date.now() - gameStartTime) / 1000
+      );
+
+      setTimePlayedInSeconds(elapsedSeconds);
       setCompleted(true);
       setResult(null);
     }
   };
-
-  // RESTART CHALLENGE
 
   const restartChallenge = () => {
     setCurrentWord(0);
@@ -254,191 +257,315 @@ function App() {
     setResult(null);
     setError("");
     setCompleted(false);
+
+    setScore(0);
+    setTimePlayedInSeconds(0);
+    setGameStartTime(Date.now());
   };
 
-  // COMPLETED
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
 
+    return `${minutes}:${remainingSeconds
+        .toString()
+        .padStart(2, "0")}`;
+  };
+
+  const handleSubmitScore = async () => {
+    await submitLeaderboardScore(
+        score,
+        timePlayedInSeconds
+    );
+  };
+
+  /*
+   * COMPLETION SCREEN
+   */
   if (completed) {
     return (
-      <div className="app">
-        <div className="game-card">
+        <div className="app">
+          <div className="game-card">
 
-          <div className="completion-icon">
-            🎉
+            <div className="account-bar">
+              {user ? (
+                  <div className="logged-in-area">
+                <span>
+                  Signed in as{" "}
+                  <strong>
+                    {user.displayName || user.email}
+                  </strong>
+                </span>
+
+                    <button
+                        className="text-button"
+                        onClick={signOutUser}
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+              ) : (
+                  <button
+                      className="login-button"
+                      onClick={() => setShowAuth(true)}
+                  >
+                    Sign In
+                  </button>
+              )}
+            </div>
+
+            <div className="completion-icon">
+              🎉
+            </div>
+
+            <h1>Challenge Complete!</h1>
+
+            <p className="instruction">
+              You completed all 5 Sanskrit pronunciation
+              challenges.
+            </p>
+
+            <div className="final-stats">
+
+              <div className="stat-box">
+                <div className="stat-label">
+                  Score
+                </div>
+
+                <div className="stat-value">
+                  {score} / 1000
+                </div>
+              </div>
+
+              <div className="stat-box">
+                <div className="stat-label">
+                  Time
+                </div>
+
+                <div className="stat-value">
+                  {formatTime(timePlayedInSeconds)}
+                </div>
+              </div>
+
+            </div>
+
+            <div className="leaderboard-section">
+
+              <h2>Leaderboard</h2>
+
+              {!user && (
+                  <p className="leaderboard-info">
+                    Sign in to submit your score to the
+                    ZATM leaderboard.
+                  </p>
+              )}
+
+              {user && (
+                  <button
+                      className="submit-score-button"
+                      onClick={handleSubmitScore}
+                      disabled={submittingScore}
+                  >
+                    {submittingScore
+                        ? "Submitting..."
+                        : "🏆 Submit Score"}
+                  </button>
+              )}
+
+              {leaderboardMessage && (
+                  <p className="leaderboard-message">
+                    {leaderboardMessage}
+                  </p>
+              )}
+
+            </div>
+
+            <button
+                className="speak-button"
+                onClick={restartChallenge}
+            >
+              🔄 Start Again
+            </button>
+
           </div>
 
-          <h1>
-            Challenge Complete!
-          </h1>
-
-          <p className="instruction">
-            You completed all 5
-            Sanskrit pronunciation
-            challenges.
-          </p>
-
-          <button
-            className="speak-button"
-            onClick={restartChallenge}
-          >
-            🔄 Start Again
-          </button>
-
+          {showAuth && (
+              <AuthPanel
+                  onClose={() => setShowAuth(false)}
+              />
+          )}
         </div>
-      </div>
     );
   }
 
-  // MAIN SCREEN
-
+  /*
+   * MAIN GAME SCREEN
+   */
   return (
-    <div className="app">
+      <div className="app">
 
-      <div className="game-card">
+        <div className="game-card">
 
-        {/* PROGRESS CHECKER */}
+          <div className="account-bar">
 
-        <div className="progress">
-          {currentWord + 1} / {words.length}
-        </div>
+            {user ? (
+                <div className="logged-in-area">
 
-        <h1>
-          Pronunciation Challenge
-        </h1>
+              <span>
+                👤{" "}
+                {user.displayName || user.email}
+              </span>
 
-        <p className="instruction">
-          Listen to the Sanskrit phrase,
-          then say it.
-        </p>
+                  <button
+                      className="text-button"
+                      onClick={signOutUser}
+                  >
+                    Sign Out
+                  </button>
 
-        {/* WORD */}
+                </div>
+            ) : (
+                <button
+                    className="login-button"
+                    onClick={() => setShowAuth(true)}
+                >
+                  Sign In
+                </button>
+            )}
 
-        <div className="sanskrit-word">
-          {word.sanskrit}
-        </div>
+          </div>
 
-        {/* MEANING */}
+          <div className="game-info">
 
-        <p className="meaning">
-          {word.meaning}
-        </p>
+            <div className="progress">
+              {currentWord + 1} / {words.length}
+            </div>
 
-        {/* LISTEN */}
+            <div className="current-score">
+              Score: {score} / 1000
+            </div>
 
-        <button
-          className="listen-button"
-          onClick={playAudio}
-        >
-          🔊 Listen
-        </button>
+          </div>
 
-        {/* SPEAK */}
+          <h1>
+            Pronunciation Challenge
+          </h1>
 
-        <button
-          className="speak-button"
-          onClick={startListening}
-          disabled={isListening}
-        >
-          🎤{" "}
-          {isListening
-            ? "Listening..."
-            : "Start Speaking"}
-        </button>
+          <p className="instruction">
+            Listen to the Sanskrit phrase, then say it.
+          </p>
 
-        {/* TRANSCRIPT */}
+          <div className="sanskrit-word">
+            {word.sanskrit}
+          </div>
 
-        <div className="result">
+          <p className="meaning">
+            {word.meaning}
+          </p>
 
-          <h2>
-            Your attempt
-          </h2>
+          <button
+              className="listen-button"
+              onClick={playAudio}
+          >
+            🔊 Listen
+          </button>
 
-          {transcript ? (
-            <p className="transcript">
-              {transcript}
-            </p>
-          ) : (
-            <p className="placeholder">
-              Your speech will
-              appear here.
-            </p>
+          <button
+              className="speak-button"
+              onClick={startListening}
+              disabled={isListening}
+          >
+            🎤{" "}
+            {isListening
+                ? "Listening..."
+                : "Start Speaking"}
+          </button>
+
+          <div className="result">
+
+            <h2>Your attempt</h2>
+
+            {transcript ? (
+                <p className="transcript">
+                  {transcript}
+                </p>
+            ) : (
+                <p className="placeholder">
+                  Your speech will appear here.
+                </p>
+            )}
+
+          </div>
+
+          {error && (
+              <p className="error">
+                {error}
+              </p>
           )}
 
         </div>
 
-        {/* ERROR */}
+        {result && (
+            <div className="popup-overlay">
 
-        {error && (
-          <p className="error">
-            {error}
-          </p>
+              <div
+                  className={`popup ${result.level}`}
+              >
+
+                <div className="popup-icon">
+                  {result.icon}
+                </div>
+
+                <h2>
+                  {result.title}
+                </h2>
+
+                <p>
+                  {result.message}
+                </p>
+
+                <div className="score">
+                  {result.score}%
+                </div>
+
+                <p className="spoken-result">
+                  You said:
+                </p>
+
+                <div className="popup-word">
+                  {transcript}
+                </div>
+
+                {result.score === 100 && (
+                    <button
+                        className="close-button"
+                        onClick={continueToNextWord}
+                    >
+                      Continue
+                    </button>
+                )}
+
+                {result.score !== 100 && (
+                    <button
+                        className="close-button"
+                        onClick={() => setResult(null)}
+                    >
+                      Try Again
+                    </button>
+                )}
+
+              </div>
+
+            </div>
+        )}
+
+        {showAuth && (
+            <AuthPanel
+                onClose={() => setShowAuth(false)}
+            />
         )}
 
       </div>
-
-      {/* RESULT POPUP */}
-
-      {result && (
-        <div className="popup-overlay">
-
-          <div
-            className={`popup ${result.level}`}
-          >
-
-            <div className="popup-icon">
-              {result.icon}
-            </div>
-
-            <h2>
-              {result.title}
-            </h2>
-
-            <p>
-              {result.message}
-            </p>
-
-            <div className="score">
-              {result.score}%
-            </div>
-
-            <p className="spoken-result">
-              You said:
-            </p>
-
-            <div className="popup-word">
-              {transcript}
-            </div>
-
-            {/* CONTINUE ONLY AFTER 100% */}
-
-            {result.score === 100 && (
-              <button
-                className="close-button"
-                onClick={continueToNextWord}
-              >
-                Continue
-              </button>
-            )}
-
-            {/* TRY AGAIN */}
-
-            {result.score !== 100 && (
-              <button
-                className="close-button"
-                onClick={() =>
-                  setResult(null)
-                }
-              >
-                Try Again
-              </button>
-            )}
-
-          </div>
-
-        </div>
-      )}
-
-    </div>
   );
 }
 
