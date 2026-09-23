@@ -9,9 +9,7 @@ function App() {
   const [result, setResult] = useState(null);
   const [completed, setCompleted] = useState(false);
 
-  // --------------------------------
   // WORDS
-  // --------------------------------
 
   const words = [
     {
@@ -105,9 +103,7 @@ function App() {
 
   const word = words[currentWord];
 
-  // --------------------------------
   // NORMALIZE TEXT
-  // --------------------------------
 
   const normalizeText = (text) => {
     return text
@@ -117,9 +113,7 @@ function App() {
       .replace(/\s+/g, " ");
   };
 
-  // --------------------------------
   // PLAY MP3 AUDIO
-  // --------------------------------
 
   const playAudio = () => {
     setError("");
@@ -137,9 +131,7 @@ function App() {
     }
   };
 
-  // --------------------------------
   // CHECK PRONUNCIATION
-  // --------------------------------
 
   const judgePronunciation = (spokenText) => {
     const normalizedSpeech = normalizeText(spokenText);
@@ -169,9 +161,7 @@ function App() {
     };
   };
 
-  // --------------------------------
   // SPEECH RECOGNITION
-  // --------------------------------
 
   const startListening = () => {
     setError("");
