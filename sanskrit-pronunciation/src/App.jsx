@@ -93,6 +93,7 @@ function App() {
           "भगत नाम किम",
           "बहुत नाम के",
           "भगत नाम की",
+          "बहुत नमकम",
         "bhavatah nama kim",
         "bhavataha nama kim",
         "bhavato nama kim"
@@ -113,7 +114,7 @@ function App() {
       .replace(/\s+/g, " ");
   };
 
-  // PLAY MP3 AUDIO
+  // MP3 AUDIO
 
   const playAudio = () => {
     setError("");
@@ -123,7 +124,7 @@ function App() {
 
       audio.play().catch(() => {
         setError(
-          "The audio could not be played. Please check that the MP3 file exists."
+          "The audio could not be played."
         );
       });
     } catch (error) {
@@ -181,8 +182,6 @@ function App() {
 
     const recognition = new SpeechRecognition();
 
-    // Hindi recognition currently works better
-    // for Sanskrit pronunciation in your setup.
     recognition.lang = word.recognitionLang || "hi-IN";
 
     recognition.continuous = false;
@@ -229,12 +228,8 @@ function App() {
     recognition.start();
   };
 
-  // --------------------------------
-  // CONTINUE TO NEXT WORD
-  // --------------------------------
-
   const continueToNextWord = () => {
-    // Only continue if the user got 100%
+    // Continue if the user got 100%
     if (!result || result.score !== 100) {
       return;
     }
@@ -251,9 +246,7 @@ function App() {
     }
   };
 
-  // --------------------------------
   // RESTART CHALLENGE
-  // --------------------------------
 
   const restartChallenge = () => {
     setCurrentWord(0);
@@ -263,9 +256,7 @@ function App() {
     setCompleted(false);
   };
 
-  // --------------------------------
-  // COMPLETED SCREEN
-  // --------------------------------
+  // COMPLETED
 
   if (completed) {
     return (
@@ -298,16 +289,14 @@ function App() {
     );
   }
 
-  // --------------------------------
   // MAIN SCREEN
-  // --------------------------------
 
   return (
     <div className="app">
 
       <div className="game-card">
 
-        {/* PROGRESS */}
+        {/* PROGRESS CHECKER */}
 
         <div className="progress">
           {currentWord + 1} / {words.length}
