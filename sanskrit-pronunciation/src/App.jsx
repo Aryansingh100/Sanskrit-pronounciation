@@ -406,17 +406,32 @@ function App() {
       setIsListening(true);
     };
 
-    recognition.onresult = (event) => {
-      const spokenText = event.results[0][0].transcript;
+    recognition.onresult = async (event) => {
+      const spokenText =
+          event.results[0][0].transcript;
 
-      console.log("Browser recognized:", spokenText);
+      console.log(
+          "Browser recognized:",
+          spokenText
+      );
 
       setTranscript(spokenText);
 
-      const pronunciationResult =
-          judgePronunciation(spokenText);
+      try {
+        const pronunciationResult =
+            await judgePronunciation(spokenText);
 
-      setResult(pronunciationResult);
+        setResult(pronunciationResult);
+      } catch (error) {
+        console.error(
+            "Pronunciation processing error:",
+            error
+        );
+
+        setError(
+            "We could not process your pronunciation. Please try again."
+        );
+      }
     };
 
     recognition.onerror = (event) => {
