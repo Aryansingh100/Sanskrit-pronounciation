@@ -1,9 +1,99 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 
 import { useAuth } from "./hooks/useAuth";
 import { useLeaderboard } from "./hooks/useLeaderboard";
 import AuthPanel from "./components/auth/AuthPanel";
+
+const initialWords = [
+  {
+    sanskrit: "सुप्रभातम्",
+    meaning: "Good morning",
+    audio: "/audio/suprabhatam.MP3",
+    recognitionLang: "hi-IN",
+    accepted: [
+      "सुप्रभातम्",
+      "सुप्रभातम",
+      "सुप्रभात",
+      "suprabhatam",
+      "suprabhat",
+      "su prabhatam",
+      "su prabhat"
+    ]
+  },
+
+  {
+    sanskrit: "धन्यवादः",
+    meaning: "Thank you",
+    audio: "/audio/dhanyavadah.MP3",
+    recognitionLang: "hi-IN",
+    accepted: [
+      "धन्यवादः",
+      "धन्यवाद",
+      "dhanyavadah",
+      "dhanyavada",
+      "dhanyavad"
+    ]
+  },
+
+  {
+    sanskrit: "स्वागतम् ।",
+    meaning: "Welcome",
+    audio: "/audio/swagatam.MP3",
+    recognitionLang: "hi-IN",
+    accepted: [
+      "स्वागतम्",
+      "स्वागतम",
+      "स्वागतं",
+      "स्वागत",
+      "swagatam",
+      "swagat",
+      "swaagatam",
+      "swāgatam"
+    ]
+  },
+
+  {
+    sanskrit: "चिन्ता मास्तु ।",
+    meaning: "Don't worry",
+    audio: "/audio/chinta-mastu.MP3",
+    recognitionLang: "hi-IN",
+    accepted: [
+      "चिन्ता मास्तु",
+      "चिंता मास्तु",
+      "चिन्ता मास् तु",
+      "चिंता मास् तु",
+      "चिंता वास्तु",
+      "चिंता मास्टर",
+      "chinta mastu",
+      "chintā māstu",
+      "chinta maastu",
+      "chinta mastoo"
+    ]
+  },
+
+  {
+    sanskrit: "भवतः नाम किं ?",
+    meaning: "What is your name? (masc.)",
+    audio: "/audio/bhavatah-nama-kim.MP3",
+    recognitionLang: "hi-IN",
+    accepted: [
+      "भवतः नाम किं",
+      "भवतः नाम किम्",
+      "भवतः नाम किम",
+      "भवतो नाम किं",
+      "भवतो नाम किम्",
+      "भगत नाम किम",
+      "बहुत नाम के",
+      "भगत नाम की",
+      "बहुत नमकम",
+      "भगत नाम के",
+      "bhavatah nama kim",
+      "bhavataha nama kim",
+      "bhavato nama kim"
+    ]
+  }
+];
 
 function App() {
   const { user, signOutUser } = useAuth();
@@ -28,92 +118,6 @@ function App() {
     submittingScore,
     submitLeaderboardScore
   } = useLeaderboard(user);
-
-  const words = [
-    {
-      sanskrit: "सुप्रभातम्",
-      meaning: "Good morning",
-      audio: "/audio/suprabhatam.MP3",
-      recognitionLang: "hi-IN",
-      accepted: [
-        "सुप्रभातम्",
-        "सुप्रभातम",
-        "सुप्रभात",
-        "suprabhatam",
-        "suprabhat",
-        "su prabhatam",
-        "su prabhat"
-      ]
-    },
-    {
-      sanskrit: "धन्यवादः",
-      meaning: "Thank you",
-      audio: "/audio/dhanyavadah.MP3",
-      recognitionLang: "hi-IN",
-      accepted: [
-        "धन्यवादः",
-        "धन्यवाद",
-        "dhanyavadah",
-        "dhanyavada",
-        "dhanyavad"
-      ]
-    },
-    {
-      sanskrit: "स्वागतम् ।",
-      meaning: "Welcome",
-      audio: "/audio/swagatam.MP3",
-      recognitionLang: "hi-IN",
-      accepted: [
-        "स्वागतम्",
-        "स्वागतम",
-        "स्वागतं",
-        "स्वागत",
-        "swagatam",
-        "swagat",
-        "swaagatam",
-        "swāgatam"
-      ]
-    },
-    {
-      sanskrit: "चिन्ता मास्तु ।",
-      meaning: "Don't worry",
-      audio: "/audio/chinta-mastu.MP3",
-      recognitionLang: "hi-IN",
-      accepted: [
-        "चिन्ता मास्तु",
-        "चिंता मास्तु",
-        "चिन्ता मास् तु",
-        "चिंता मास् तु",
-        "चिंता वास्तु",
-        "चिंता मास्टर",
-        "chinta mastu",
-        "chintā māstu",
-        "chinta maastu",
-        "chinta mastoo"
-      ]
-    },
-    {
-      sanskrit: "भवतः नाम किं ?",
-      meaning: "What is your name? (masc.)",
-      audio: "/audio/bhavatah-nama-kim.MP3",
-      recognitionLang: "hi-IN",
-      accepted: [
-        "भवतः नाम किं",
-        "भवतः नाम किम्",
-        "भवतः नाम किम",
-        "भवतो नाम किं",
-        "भवतो नाम किम्",
-        "भगत नाम किम",
-        "बहुत नाम के",
-        "भगत नाम की",
-        "बहुत नमकम",
-        "भगत नाम के",
-        "bhavatah nama kim",
-        "bhavataha nama kim",
-        "bhavato nama kim"
-      ]
-    }
-  ];
 
   const word = words[currentWord];
 
