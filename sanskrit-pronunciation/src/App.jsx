@@ -95,6 +95,26 @@ const initialWords = [
   }
 ];
 
+const generateIAST = async (sanskritText) => {
+  const params = new URLSearchParams({
+    source: "Devanagari",
+    target: "IAST",
+    text: sanskritText
+  });
+
+  const response = await fetch(
+      `https://aksharamukha-plugin.appspot.com/api/public?${params.toString()}`
+  );
+
+  if (!response.ok) {
+    throw new Error("Aksharamukha request failed.");
+  }
+
+  const result = await response.text();
+
+  return result.trim();
+};
+
 function App() {
   const { user, signOutUser } = useAuth();
 
