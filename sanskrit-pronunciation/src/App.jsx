@@ -139,6 +139,21 @@ const calculateEditDistance = (a, b) => {
   return matrix[b.length][a.length];
 };
 
+const calculateSimilarity = (a, b) => {
+  if (!a && !b) {
+    return 1;
+  }
+
+  if (!a || !b) {
+    return 0;
+  }
+
+  const distance = calculateEditDistance(a, b);
+  const maxLength = Math.max(a.length, b.length);
+
+  return 1 - distance / maxLength;
+};
+
 function App() {
   const { user, signOutUser } = useAuth();
 
