@@ -209,8 +209,21 @@ function App() {
   const judgePronunciation = (spokenText) => {
     const normalizedSpeech = normalizeText(spokenText);
 
-    const isCorrect = word.accepted.some(
-        (answer) => normalizeText(answer) === normalizedSpeech
+    const acceptedAnswers = [
+      ...word.accepted,
+      word.iast
+    ].filter(Boolean);
+
+    const normalizedAnswers = acceptedAnswers.map(
+        (answer) => normalizeText(answer)
+    );
+
+    console.log("Recognized:", normalizedSpeech);
+    console.log("Accepted:", normalizedAnswers);
+    console.log("IAST:", word.iast);
+
+    const isCorrect = normalizedAnswers.some(
+        (answer) => answer === normalizedSpeech
     );
 
     if (isCorrect) {
