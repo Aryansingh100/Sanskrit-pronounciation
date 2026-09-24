@@ -118,6 +118,8 @@ const generateIAST = async (sanskritText) => {
 function App() {
   const { user, signOutUser } = useAuth();
 
+  const [words, setWords] = useState(initialWords);
+
   const [currentWord, setCurrentWord] = useState(0);
   const [transcript, setTranscript] = useState("");
   const [isListening, setIsListening] = useState(false);
@@ -132,6 +134,45 @@ function App() {
 
   // Authentication popup
   const [showAuth, setShowAuth] = useState(false);
+
+  useEffect(() => {
+    const loadIASTReferences = async () => {
+      try {
+        const updatedWords = await Promise.all(
+            initialWords.map(async (word) => {
+              try {
+                const iast = await generateIAST(word.sanskrit);
+
+                console.log(
+                    `${word.sanskrit} → ${iast}`
+                );
+
+                return {
+                  ...word,
+                  iast
+                };
+              } catch (error) {
+                console.error(
+                    `Could not generate IAST for ${word.sanskrit}`,
+                    error
+                );
+
+                return word;
+              }
+            })
+        );
+
+        setWords(updatedWords);
+      } catch (error) {
+        console.error(
+            "Could not generate IAST references:",
+            error
+        );
+      }
+    };
+
+    loadIASTReferences();
+  }, []);
 
   const {
     leaderboardMessage,
