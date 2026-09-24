@@ -259,7 +259,11 @@ button:disabled {
 }
 
 .popup.almost {
-  border-top: 8px solid #ffd54f;
+  border-top: 6px solid #f1c40f;
+}
+
+.popup.almost .popup-icon {
+  color: #f1c40f;
 }
 
 .popup.try-again {

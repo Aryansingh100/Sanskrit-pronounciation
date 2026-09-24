@@ -14,7 +14,6 @@ const initialWords = [
     accepted: [
       "सुप्रभातम्",
       "सुप्रभातम",
-      "सुप्रभात",
       "suprabhatam",
       "suprabhat",
       "su prabhatam",
@@ -44,8 +43,6 @@ const initialWords = [
     accepted: [
       "स्वागतम्",
       "स्वागतम",
-      "स्वागतं",
-      "स्वागत",
       "swagatam",
       "swagat",
       "swaagatam",
@@ -58,32 +55,24 @@ const initialWords = [
     meaning: "Don't worry",
     audio: "/audio/chinta-mastu.MP3",
     recognitionLang: "hi-IN",
-    accepted: [
-      "चिन्ता मास्तु",
-      "चिंता मास्तु",
-      "चिन्ता मास् तु",
-      "चिंता मास् तु",
-      "चिंता वास्तु",
-      "चिंता मास्टर",
+    recognitionMode: "hindi-to-roman",
+
+    romanAccepted: [
       "chinta mastu",
       "chintā māstu",
+      "cinta mastu",
       "chinta maastu",
       "chinta mastoo"
     ]
   },
-
   {
     sanskrit: "भवतः नाम किं ?",
     meaning: "What is your name? (masc.)",
     audio: "/audio/bhavatah-nama-kim.MP3",
     recognitionLang: "hi-IN",
-    accepted: [
-      "भवतः नाम किं",
-      "भवतः नाम किम्",
-      "भवतः नाम किम",
-      "भवतो नाम किं",
-      "भवतो नाम किम्",
-      "भगत नाम किम",
+    recognitionMode: "hindi-to-roman",
+
+    romanAccepted: [
       "bhavatah nama kim",
       "bhavataha nama kim",
       "bhavato nama kim"
@@ -276,7 +265,82 @@ function App() {
     }
   };
 
-  const judgePronunciation = (spokenText) => {
+  const transliterateHindiToIAST = async (hindiText) => {
+    const params = new URLSearchParams({
+      source: "Devanagari",
+      target: "IAST",
+      text: hindiText,
+      preoptions: "RemoveSchwaHindi"
+    });
+
+    const response = await fetch(
+        `https://aksharamukha-plugin.appspot.com/api/public?${params.toString()}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Aksharamukha conversion failed.");
+    }
+
+    const result = await response.text();
+
+    return result.trim();
+  };
+
+  const judgePronunciation = async (spokenText) => {
+    /*
+     * LEVELS 4 AND 5
+     */
+
+    if (word.recognitionMode === "hindi-to-roman") {
+      const romanSpeech =
+          await transliterateHindiToIAST(spokenText);
+
+      const normalizedSpeech =
+          normalizeText(romanSpeech);
+
+      const acceptedAnswers = [
+        ...(word.romanAccepted || []),
+        word.iast
+      ].filter(Boolean);
+
+      const normalizedAnswers =
+          acceptedAnswers.map((answer) =>
+              normalizeText(answer)
+          );
+
+      console.log("Hindi recognized:", spokenText);
+      console.log("Aksharamukha Roman:", romanSpeech);
+      console.log("Normalized Roman:", normalizedSpeech);
+      console.log("Accepted Roman:", normalizedAnswers);
+
+      const isCorrect = normalizedAnswers.some(
+          (answer) => answer === normalizedSpeech
+      );
+
+      if (isCorrect) {
+        return {
+          level: "great",
+          title: "Great!",
+          message: "Excellent pronunciation!",
+          icon: "🟢",
+          score: 100
+        };
+      }
+
+      return {
+        level: "try-again",
+        title: "Try Again",
+        message:
+            "Listen carefully and try the phrase again.",
+        icon: "🔴",
+        score: 0
+      };
+    }
+
+    /*
+     * LEVELS 1–3
+     */
+
     const normalizedSpeech = normalizeText(spokenText);
 
     const acceptedAnswers = [
@@ -292,15 +356,11 @@ function App() {
     console.log("Accepted:", normalizedAnswers);
     console.log("IAST:", word.iast);
 
-    // --------------------------------
-    // 1. GREAT
-    // --------------------------------
-
-    const exactMatch = normalizedAnswers.some(
+    const isCorrect = normalizedAnswers.some(
         (answer) => answer === normalizedSpeech
     );
 
-    if (exactMatch) {
+    if (isCorrect) {
       return {
         level: "great",
         title: "Great!",
@@ -310,72 +370,11 @@ function App() {
       };
     }
 
-    // --------------------------------
-    // 2. FIND BEST SIMILARITY
-    // --------------------------------
-
-    let bestSimilarity = 0;
-    let bestWordCoverage = 0;
-
-    normalizedAnswers.forEach((answer) => {
-      const similarity = calculateSimilarity(
-          answer,
-          normalizedSpeech
-      );
-
-      const wordCoverage = calculateWordCoverage(
-          answer,
-          normalizedSpeech
-      );
-
-      bestSimilarity = Math.max(
-          bestSimilarity,
-          similarity
-      );
-
-      bestWordCoverage = Math.max(
-          bestWordCoverage,
-          wordCoverage
-      );
-    });
-
-    console.log(
-        "Best similarity:",
-        bestSimilarity
-    );
-
-    console.log(
-        "Best word coverage:",
-        bestWordCoverage
-    );
-
-    // --------------------------------
-    // 3. ALMOST THERE
-    // --------------------------------
-
-    if (
-        bestSimilarity >= 0.60 ||
-        bestWordCoverage >= 0.60
-    ) {
-      return {
-        level: "almost",
-        title: "Almost There!",
-        message:
-            "You were close! Listen again and try to pronounce the full phrase.",
-        icon: "🟡",
-        score: 50
-      };
-    }
-
-    // --------------------------------
-    // 4. TRY AGAIN
-    // --------------------------------
-
     return {
       level: "try-again",
       title: "Try Again",
       message:
-          "The recognized speech was quite different from the target.",
+          "Listen carefully and try the phrase again.",
       icon: "🔴",
       score: 0
     };
