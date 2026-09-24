@@ -1,183 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import "./App.css";
 
 import { useAuth } from "./hooks/useAuth";
 import { useLeaderboard } from "./hooks/useLeaderboard";
 import AuthPanel from "./components/auth/AuthPanel";
 
-const initialWords = [
-  {
-    sanskrit: "सुप्रभातम्",
-    meaning: "Good morning",
-    audio: "/audio/suprabhatam.MP3",
-    recognitionLang: "hi-IN",
-    accepted: [
-      "सुप्रभातम्",
-      "सुप्रभातम",
-      "suprabhatam",
-      "suprabhat",
-      "su prabhatam",
-      "su prabhat"
-    ]
-  },
-
-  {
-    sanskrit: "धन्यवादः",
-    meaning: "Thank you",
-    audio: "/audio/dhanyavadah.MP3",
-    recognitionLang: "hi-IN",
-    accepted: [
-      "धन्यवादः",
-      "धन्यवाद",
-      "dhanyavadah",
-      "dhanyavada",
-      "dhanyavad"
-    ]
-  },
-
-  {
-    sanskrit: "स्वागतम् ।",
-    meaning: "Welcome",
-    audio: "/audio/swagatam.MP3",
-    recognitionLang: "hi-IN",
-    accepted: [
-      "स्वागतम्",
-      "स्वागतम",
-      "swagatam",
-      "swagat",
-      "swaagatam",
-      "swāgatam"
-    ]
-  },
-
-  {
-    sanskrit: "चिन्ता मास्तु ।",
-    meaning: "Don't worry",
-    audio: "/audio/chinta-mastu.MP3",
-    recognitionLang: "hi-IN",
-    recognitionMode: "hindi-to-roman",
-
-    romanAccepted: [
-      "chinta mastu",
-      "chintā māstu",
-      "cinta mastu",
-      "chinta maastu",
-      "chinta mastoo"
-    ]
-  },
-  {
-    sanskrit: "भवतः नाम किं ?",
-    meaning: "What is your name? (masc.)",
-    audio: "/audio/bhavatah-nama-kim.MP3",
-    recognitionLang: "hi-IN",
-    recognitionMode: "hindi-to-roman",
-
-    romanAccepted: [
-      "bhavatah nama kim",
-      "bhavataha nama kim",
-      "bhavato nama kim"
-    ]
-  }
-];
-
-const generateIAST = async (sanskritText) => {
-  const params = new URLSearchParams({
-    source: "Devanagari",
-    target: "IAST",
-    text: sanskritText
-  });
-
-  const response = await fetch(
-      `https://aksharamukha-plugin.appspot.com/api/public?${params.toString()}`
-  );
-
-  if (!response.ok) {
-    throw new Error("Aksharamukha request failed.");
-  }
-
-  const result = await response.text();
-
-  return result.trim();
-};
-
-const calculateEditDistance = (a, b) => {
-  const matrix = [];
-
-  for (let i = 0; i <= b.length; i++) {
-    matrix[i] = [i];
-  }
-
-  for (let j = 0; j <= a.length; j++) {
-    matrix[0][j] = j;
-  }
-
-  for (let i = 1; i <= b.length; i++) {
-    for (let j = 1; j <= a.length; j++) {
-      if (b.charAt(i - 1) === a.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1];
-      } else {
-        matrix[i][j] = Math.min(
-            matrix[i - 1][j] + 1,
-            matrix[i][j - 1] + 1,
-            matrix[i - 1][j - 1] + 1
-        );
-      }
-    }
-  }
-
-  return matrix[b.length][a.length];
-};
-
-const calculateSimilarity = (a, b) => {
-  if (!a && !b) {
-    return 1;
-  }
-
-  if (!a || !b) {
-    return 0;
-  }
-
-  const distance = calculateEditDistance(a, b);
-  const maxLength = Math.max(a.length, b.length);
-
-  return 1 - distance / maxLength;
-};
-
-const calculateWordCoverage = (target, spoken) => {
-  const targetWords = target
-      .split(" ")
-      .filter(Boolean);
-
-  const spokenWords = spoken
-      .split(" ")
-      .filter(Boolean);
-
-  if (targetWords.length === 0) {
-    return 0;
-  }
-
-  let matchedWords = 0;
-
-  targetWords.forEach((targetWord) => {
-    const bestWordSimilarity = Math.max(
-        ...spokenWords.map((spokenWord) =>
-            calculateSimilarity(targetWord, spokenWord)
-        ),
-        0
-    );
-
-    if (bestWordSimilarity >= 0.65) {
-      matchedWords++;
-    }
-  });
-
-  return matchedWords / targetWords.length;
-};
-
 function App() {
   const { user, signOutUser } = useAuth();
-
-  const [words, setWords] = useState(initialWords);
 
   const [currentWord, setCurrentWord] = useState(0);
   const [transcript, setTranscript] = useState("");
@@ -186,52 +15,11 @@ function App() {
   const [result, setResult] = useState(null);
   const [completed, setCompleted] = useState(false);
 
-  // Leaderboard and game score
   const [score, setScore] = useState(0);
   const [gameStartTime, setGameStartTime] = useState(() => Date.now());
   const [timePlayedInSeconds, setTimePlayedInSeconds] = useState(0);
 
-  // Authentication popup
   const [showAuth, setShowAuth] = useState(false);
-
-  useEffect(() => {
-    const loadIASTReferences = async () => {
-      try {
-        const updatedWords = await Promise.all(
-            initialWords.map(async (word) => {
-              try {
-                const iast = await generateIAST(word.sanskrit);
-
-                console.log(
-                    `${word.sanskrit} → ${iast}`
-                );
-
-                return {
-                  ...word,
-                  iast
-                };
-              } catch (error) {
-                console.error(
-                    `Could not generate IAST for ${word.sanskrit}`,
-                    error
-                );
-
-                return word;
-              }
-            })
-        );
-
-        setWords(updatedWords);
-      } catch (error) {
-        console.error(
-            "Could not generate IAST references:",
-            error
-        );
-      }
-    };
-
-    loadIASTReferences();
-  }, []);
 
   const {
     leaderboardMessage,
@@ -239,7 +27,109 @@ function App() {
     submitLeaderboardScore
   } = useLeaderboard(user);
 
+  /*
+   * ============================================================
+   * GAME WORDS
+   * ============================================================
+   */
+
+  const words = [
+    {
+      sanskrit: "सुप्रभातम्",
+      meaning: "Good morning",
+      audio: "/audio/suprabhatam.MP3",
+      recognitionLang: "hi-IN",
+
+      accepted: [
+        "सुप्रभातम्",
+        "सुप्रभातम",
+        "सुप्रभात",
+        "suprabhatam",
+        "suprabhat",
+        "su prabhatam",
+        "su prabhat"
+      ]
+    },
+
+    {
+      sanskrit: "धन्यवादः",
+      meaning: "Thank you",
+      audio: "/audio/dhanyavadah.MP3",
+      recognitionLang: "hi-IN",
+
+      accepted: [
+        "धन्यवादः",
+        "धन्यवाद",
+        "dhanyavadah",
+        "dhanyavada",
+        "dhanyavad"
+      ]
+    },
+
+    {
+      sanskrit: "स्वागतम् ।",
+      meaning: "Welcome",
+      audio: "/audio/swagatam.MP3",
+      recognitionLang: "hi-IN",
+
+      accepted: [
+        "स्वागतम्",
+        "स्वागतम",
+        "स्वागतं",
+        "स्वागत",
+        "swagatam",
+        "swagat",
+        "swaagatam",
+        "swāgatam"
+      ]
+    },
+
+    {
+      sanskrit: "चिन्ता मास्तु ।",
+      meaning: "Don't worry",
+      audio: "/audio/chinta-mastu.MP3",
+      recognitionLang: "hi-IN",
+
+      accepted: [
+        "चिन्ता मास्तु",
+        "चिंता मास्तु",
+        "चिन्ता मास् तु",
+        "चिंता मास् तु",
+
+        "chinta mastu",
+        "chintā māstu",
+        "chinta maastu",
+        "chinta mastoo"
+      ]
+    },
+
+    {
+      sanskrit: "भवतः नाम किं ?",
+      meaning: "What is your name? (masc.)",
+      audio: "/audio/bhavatah-nama-kim.MP3",
+      recognitionLang: "hi-IN",
+
+      accepted: [
+        "भवतः नाम किं",
+        "भवतः नाम किम्",
+        "भवतः नाम किम",
+        "भवतो नाम किं",
+        "भवतो नाम किम्",
+
+        "bhavatah nama kim",
+        "bhavataha nama kim",
+        "bhavato nama kim"
+      ]
+    }
+  ];
+
   const word = words[currentWord];
+
+  /*
+   * ============================================================
+   * NORMALIZE TEXT
+   * ============================================================
+   */
 
   const normalizeText = (text) => {
     return text
@@ -250,6 +140,12 @@ function App() {
         .replace(/[।.,!?]/g, "")
         .replace(/\s+/g, " ");
   };
+
+  /*
+   * ============================================================
+   * PLAY MP3
+   * ============================================================
+   */
 
   const playAudio = () => {
     setError("");
@@ -265,108 +161,231 @@ function App() {
     }
   };
 
-  const transliterateHindiToIAST = async (hindiText) => {
-    const params = new URLSearchParams({
-      source: "Devanagari",
-      target: "IAST",
-      text: hindiText,
-      preoptions: "RemoveSchwaHindi"
-    });
+  /*
+   * ============================================================
+   * CALCULATE HOW MUCH OF THE ANSWER WAS RECOGNIZED
+   * ============================================================
+   *
+   * 100%:
+   * Entire answer matches.
+   *
+   * 80%:
+   * At least 80% of the answer is recognized.
+   *
+   * 40%:
+   * At least 2 meaningful characters/sounds are recognized.
+   *
+   * 0%:
+   * Fewer than 2 meaningful characters/sounds match.
+   *
+   * IMPORTANT:
+   * This is NOT fuzzy matching.
+   * We compare characters in the normalized strings.
+   * ============================================================
+   */
 
-    const response = await fetch(
-        `https://aksharamukha-plugin.appspot.com/api/public?${params.toString()}`
-    );
+  const calculateMatchPercentage = (spokenText, targetText) => {
+    const spoken = normalizeText(spokenText);
+    const target = normalizeText(targetText);
 
-    if (!response.ok) {
-      throw new Error("Aksharamukha conversion failed.");
-    }
-
-    const result = await response.text();
-
-    return result.trim();
-  };
-
-  const judgePronunciation = async (spokenText) => {
-    /*
-     * LEVELS 4 AND 5
-     */
-
-    if (word.recognitionMode === "hindi-to-roman") {
-      const romanSpeech =
-          await transliterateHindiToIAST(spokenText);
-
-      const normalizedSpeech =
-          normalizeText(romanSpeech);
-
-      const acceptedAnswers = [
-        ...(word.romanAccepted || []),
-        word.iast
-      ].filter(Boolean);
-
-      const normalizedAnswers =
-          acceptedAnswers.map((answer) =>
-              normalizeText(answer)
-          );
-
-      console.log("Hindi recognized:", spokenText);
-      console.log("Aksharamukha Roman:", romanSpeech);
-      console.log("Normalized Roman:", normalizedSpeech);
-      console.log("Accepted Roman:", normalizedAnswers);
-
-      const isCorrect = normalizedAnswers.some(
-          (answer) => answer === normalizedSpeech
-      );
-
-      if (isCorrect) {
-        return {
-          level: "great",
-          title: "Great!",
-          message: "Excellent pronunciation!",
-          icon: "🟢",
-          score: 100
-        };
-      }
-
+    if (!spoken || !target) {
       return {
-        level: "try-again",
-        title: "Try Again",
-        message:
-            "Listen carefully and try the phrase again.",
-        icon: "🔴",
-        score: 0
+        percentage: 0,
+        correctCharacters: 0,
+        matchedWords: 0,
+        totalWords: 0
       };
     }
 
+    // Exact match
+    if (spoken === target) {
+      const totalWords = target.split(" ").length;
+
+      return {
+        percentage: 100,
+        correctCharacters: target.length,
+        matchedWords: totalWords,
+        totalWords
+      };
+    }
+
+    const spokenWords = spoken.split(" ");
+    const targetWords = target.split(" ");
+
+    let matchedWords = 0;
+
     /*
-     * LEVELS 1–3
+     * Compare each target word against the words
+     * Chrome recognized.
+     *
+     * A word is considered matched if it is very
+     * similar to one of the recognized words.
      */
 
+    targetWords.forEach((targetWord) => {
+      let bestWordMatch = 0;
+
+      spokenWords.forEach((spokenWord) => {
+        const maxLength = Math.max(
+            targetWord.length,
+            spokenWord.length
+        );
+
+        if (maxLength === 0) {
+          return;
+        }
+
+        let matchingCharacters = 0;
+
+        for (
+            let i = 0;
+            i < Math.min(
+                targetWord.length,
+                spokenWord.length
+            );
+            i++
+        ) {
+          if (targetWord[i] === spokenWord[i]) {
+            matchingCharacters++;
+          }
+        }
+
+        const wordPercentage =
+            matchingCharacters / maxLength;
+
+        if (wordPercentage > bestWordMatch) {
+          bestWordMatch = wordPercentage;
+        }
+      });
+
+      /*
+       * 70% similarity for an individual word
+       * counts that word as successfully recognized.
+       */
+
+      if (bestWordMatch >= 0.7) {
+        matchedWords++;
+      }
+    });
+
+    const percentage = Math.round(
+        (matchedWords / targetWords.length) * 100
+    );
+
+    return {
+      percentage,
+      correctCharacters: matchedWords,
+      matchedWords,
+      totalWords: targetWords.length
+    };
+  };
+
+  /*
+   * ============================================================
+   * JUDGE PRONUNCIATION
+   * ============================================================
+   */
+
+  const judgePronunciation = (spokenText) => {
     const normalizedSpeech = normalizeText(spokenText);
 
-    const acceptedAnswers = [
-      ...word.accepted,
-      word.iast
-    ].filter(Boolean);
+    /*
+     * First check the existing accepted answers.
+     *
+     * This preserves your current recognition system.
+     */
 
-    const normalizedAnswers = acceptedAnswers.map(
+    const normalizedAnswers = word.accepted.map(
         (answer) => normalizeText(answer)
     );
 
-    console.log("Recognized:", normalizedSpeech);
-    console.log("Accepted:", normalizedAnswers);
-    console.log("IAST:", word.iast);
+    /*
+     * EXACT MATCH
+     *
+     * If Chrome recognized one of the accepted answers,
+     * give the player 100%.
+     */
 
-    const isCorrect = normalizedAnswers.some(
+    const exactMatch = normalizedAnswers.some(
         (answer) => answer === normalizedSpeech
     );
 
-    if (isCorrect) {
+    if (exactMatch) {
       return {
         level: "great",
         title: "Great!",
         message: "Excellent pronunciation!",
         icon: "🟢",
-        score: 100
+        score: 100,
+        points: 200
+      };
+    }
+
+    /*
+     * ============================================================
+     * PARTIAL MATCH
+     * ============================================================
+     *
+     * We compare the player's speech against the closest
+     * accepted answer.
+     */
+
+    let bestMatch = {
+      percentage: 0,
+      correctCharacters: 0,
+      matchedWords: 0,
+      totalWords: 0
+    };
+
+    normalizedAnswers.forEach((answer) => {
+      const match = calculateMatchPercentage(
+          normalizedSpeech,
+          answer
+      );
+
+      if (match.percentage > bestMatch.percentage) {
+        bestMatch = match;
+      }
+    });
+
+    console.log("Recognized:", normalizedSpeech);
+    console.log("Best match:", bestMatch);
+
+    /*
+     * 80%
+     *
+     * At least 70% of the target words were recognized.
+     */
+
+    if (bestMatch.percentage >= 70) {
+      return {
+        level: "almost",
+        title: "Almost there!",
+        message: "You're very close!",
+        icon: "🟡",
+        score: 80,
+        points: 100
+      };
+    }
+
+    /*
+     * 40%
+     *
+     * At least 2 words/parts were recognized.
+     */
+
+    if (
+        bestMatch.matchedWords >= 2 ||
+        bestMatch.correctCharacters >= 2
+    ) {
+      return {
+        level: "can-do-it",
+        title: "You can do it!",
+        message:
+            "Keep practicing. You're getting there!",
+        icon: "🟠",
+        score: 40,
+        points: 50
       };
     }
 
@@ -376,9 +395,69 @@ function App() {
       message:
           "Listen carefully and try the phrase again.",
       icon: "🔴",
-      score: 0
+      score: 0,
+      points: 0
+    };
+
+    /*
+     * ============================================================
+     * 80% RESULT
+     * ============================================================
+     */
+
+    if (bestMatch.percentage >= 70) {
+      return {
+        level: "almost",
+        title: "Almost there!",
+        message: "You're very close!",
+        icon: "🟡",
+        score: 80,
+        points: 100
+      };
+    }
+
+    /*
+     * ============================================================
+     * 40% RESULT
+     * ============================================================
+     *
+     * At least 2 characters must match.
+     */
+
+    if (bestMatch.correctCharacters >= 2) {
+      return {
+        level: "can-do-it",
+        title: "You can do it!",
+        message:
+            "Keep practicing. You're getting there!",
+        icon: "🟠",
+        score: 40,
+        points: 50
+      };
+    }
+
+    /*
+     * ============================================================
+     * 0% RESULT
+     * ============================================================
+     */
+
+    return {
+      level: "try-again",
+      title: "Try Again",
+      message:
+          "Listen carefully and try the phrase again.",
+      icon: "🔴",
+      score: 0,
+      points: 0
     };
   };
+
+  /*
+   * ============================================================
+   * START SPEECH RECOGNITION
+   * ============================================================
+   */
 
   const startListening = () => {
     setError("");
@@ -398,7 +477,9 @@ function App() {
 
     const recognition = new SpeechRecognition();
 
-    recognition.lang = word.recognitionLang || "hi-IN";
+    recognition.lang =
+        word.recognitionLang || "hi-IN";
+
     recognition.continuous = false;
     recognition.interimResults = false;
 
@@ -406,7 +487,7 @@ function App() {
       setIsListening(true);
     };
 
-    recognition.onresult = async (event) => {
+    recognition.onresult = (event) => {
       const spokenText =
           event.results[0][0].transcript;
 
@@ -417,21 +498,10 @@ function App() {
 
       setTranscript(spokenText);
 
-      try {
-        const pronunciationResult =
-            await judgePronunciation(spokenText);
+      const pronunciationResult =
+          judgePronunciation(spokenText);
 
-        setResult(pronunciationResult);
-      } catch (error) {
-        console.error(
-            "Pronunciation processing error:",
-            error
-        );
-
-        setError(
-            "We could not process your pronunciation. Please try again."
-        );
-      }
+      setResult(pronunciationResult);
     };
 
     recognition.onerror = (event) => {
@@ -454,24 +524,52 @@ function App() {
     recognition.start();
   };
 
+  /*
+   * ============================================================
+   * CONTINUE TO NEXT WORD
+   * ============================================================
+   *
+   * 100% → 200 points
+   * 80%  → 100 points
+   * 40%  → 50 points
+   * 0%   → cannot continue
+   * ============================================================
+   */
+
   const continueToNextWord = () => {
-    if (!result || result.score !== 100) {
+    /*
+     * Only 100%, 80%, and 40% can continue.
+     */
+
+    if (!result || result.score === 0) {
       return;
     }
 
-    // Each completed level is worth 200 points.
-    const pointsEarned = 200;
+    /*
+     * Add the points earned for this attempt.
+     */
+
+    const pointsEarned = result.points;
+
     const newScore = score + pointsEarned;
 
     setScore(newScore);
 
+    /*
+     * Move to the next word.
+     */
+
     if (currentWord < words.length - 1) {
       setCurrentWord(currentWord + 1);
+
       setTranscript("");
       setResult(null);
       setError("");
     } else {
-      // Final level completed
+      /*
+       * The player completed the final level.
+       */
+
       const elapsedSeconds = Math.floor(
           (Date.now() - gameStartTime) / 1000
       );
@@ -481,6 +579,12 @@ function App() {
       setResult(null);
     }
   };
+
+  /*
+   * ============================================================
+   * RESTART GAME
+   * ============================================================
+   */
 
   const restartChallenge = () => {
     setCurrentWord(0);
@@ -494,14 +598,28 @@ function App() {
     setGameStartTime(Date.now());
   };
 
+  /*
+   * ============================================================
+   * FORMAT TIME
+   * ============================================================
+   */
+
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
+
+    const remainingSeconds =
+        seconds % 60;
 
     return `${minutes}:${remainingSeconds
         .toString()
         .padStart(2, "0")}`;
   };
+
+  /*
+   * ============================================================
+   * SUBMIT SCORE
+   * ============================================================
+   */
 
   const handleSubmitScore = async () => {
     await submitLeaderboardScore(
@@ -511,8 +629,11 @@ function App() {
   };
 
   /*
+   * ============================================================
    * COMPLETION SCREEN
+   * ============================================================
    */
+
   if (completed) {
     return (
         <div className="app">
@@ -630,8 +751,11 @@ function App() {
   }
 
   /*
+   * ============================================================
    * MAIN GAME SCREEN
+   * ============================================================
    */
+
   return (
       <div className="app">
 
@@ -641,7 +765,6 @@ function App() {
 
             {user ? (
                 <div className="logged-in-area">
-
               <span>
                 👤{" "}
                 {user.displayName || user.email}
@@ -653,7 +776,6 @@ function App() {
                   >
                     Sign Out
                   </button>
-
                 </div>
             ) : (
                 <button
@@ -736,6 +858,12 @@ function App() {
 
         </div>
 
+        {/*
+        * ========================================================
+        * RESULT POPUP
+        * ========================================================
+        */}
+
         {result && (
             <div className="popup-overlay">
 
@@ -767,7 +895,12 @@ function App() {
                   {transcript}
                 </div>
 
-                {result.score === 100 && (
+                {/*
+                * 100%, 80%, and 40%
+                * all get Continue.
+                */}
+
+                {result.score > 0 && (
                     <button
                         className="close-button"
                         onClick={continueToNextWord}
@@ -776,7 +909,11 @@ function App() {
                     </button>
                 )}
 
-                {result.score !== 100 && (
+                {/*
+                * Only 0% gets Try Again.
+                */}
+
+                {result.score === 0 && (
                     <button
                         className="close-button"
                         onClick={() => setResult(null)}
