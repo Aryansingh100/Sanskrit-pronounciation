@@ -154,6 +154,37 @@ const calculateSimilarity = (a, b) => {
   return 1 - distance / maxLength;
 };
 
+const calculateWordCoverage = (target, spoken) => {
+  const targetWords = target
+      .split(" ")
+      .filter(Boolean);
+
+  const spokenWords = spoken
+      .split(" ")
+      .filter(Boolean);
+
+  if (targetWords.length === 0) {
+    return 0;
+  }
+
+  let matchedWords = 0;
+
+  targetWords.forEach((targetWord) => {
+    const bestWordSimilarity = Math.max(
+        ...spokenWords.map((spokenWord) =>
+            calculateSimilarity(targetWord, spokenWord)
+        ),
+        0
+    );
+
+    if (bestWordSimilarity >= 0.65) {
+      matchedWords++;
+    }
+  });
+
+  return matchedWords / targetWords.length;
+};
+
 function App() {
   const { user, signOutUser } = useAuth();
 
@@ -261,11 +292,15 @@ function App() {
     console.log("Accepted:", normalizedAnswers);
     console.log("IAST:", word.iast);
 
-    const isCorrect = normalizedAnswers.some(
+    // --------------------------------
+    // 1. GREAT
+    // --------------------------------
+
+    const exactMatch = normalizedAnswers.some(
         (answer) => answer === normalizedSpeech
     );
 
-    if (isCorrect) {
+    if (exactMatch) {
       return {
         level: "great",
         title: "Great!",
@@ -275,10 +310,72 @@ function App() {
       };
     }
 
+    // --------------------------------
+    // 2. FIND BEST SIMILARITY
+    // --------------------------------
+
+    let bestSimilarity = 0;
+    let bestWordCoverage = 0;
+
+    normalizedAnswers.forEach((answer) => {
+      const similarity = calculateSimilarity(
+          answer,
+          normalizedSpeech
+      );
+
+      const wordCoverage = calculateWordCoverage(
+          answer,
+          normalizedSpeech
+      );
+
+      bestSimilarity = Math.max(
+          bestSimilarity,
+          similarity
+      );
+
+      bestWordCoverage = Math.max(
+          bestWordCoverage,
+          wordCoverage
+      );
+    });
+
+    console.log(
+        "Best similarity:",
+        bestSimilarity
+    );
+
+    console.log(
+        "Best word coverage:",
+        bestWordCoverage
+    );
+
+    // --------------------------------
+    // 3. ALMOST THERE
+    // --------------------------------
+
+    if (
+        bestSimilarity >= 0.60 ||
+        bestWordCoverage >= 0.60
+    ) {
+      return {
+        level: "almost",
+        title: "Almost There!",
+        message:
+            "You were close! Listen again and try to pronounce the full phrase.",
+        icon: "🟡",
+        score: 50
+      };
+    }
+
+    // --------------------------------
+    // 4. TRY AGAIN
+    // --------------------------------
+
     return {
       level: "try-again",
       title: "Try Again",
-      message: "Listen carefully and try the phrase again.",
+      message:
+          "The recognized speech was quite different from the target.",
       icon: "🔴",
       score: 0
     };
