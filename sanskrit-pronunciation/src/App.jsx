@@ -83,8 +83,100 @@ const initialWords = [
       "bhavataha nama kim",
       "bhavato nama kim"
     ]
+  },
+
+  {
+    sanskrit: "अहं मातृगृहं गतवती ।",
+    meaning: "I had been to my mother's house.",
+    audio: "/audio/aham-matrigriham-gatavathi.MP3",
+    recognitionLang: "hi-IN",
+    accepted: [
+      "अहं मातृगृहं गतवती",
+      "अहं मातृगृह गतवती",
+      "अहं मातृ गृहं गतवती",
+      "अहम् मातृगृहं गतवती",
+      "aham matrigriham gatavati",
+      "aham matrugriham gatavati"
+    ]
+  },
+
+  {
+    sanskrit: "अत्र हस्तांकनं करोतु ।",
+    meaning: "Sign here, please.",
+    audio: "/audio/atra-hastankanan-karotu.MP3",
+    recognitionLang: "hi-IN",
+    accepted: [
+      "अत्र हस्तांकनं करोतु",
+      "अत्र हस्तांकन करोतु",
+      "अत्र हस्त अंकनं करोतु",
+      "अत्र हस्तांकनम् करोतु",
+      "atra hastankanan karotu",
+      "atra hastankan karotu"
+    ]
+  },
+
+  {
+    sanskrit: "कः संभाषणं करोति ?",
+    meaning: "Who is speaking?",
+    audio: "/audio/kah-sambhashanam-karoti.MP3",
+    recognitionLang: "hi-IN",
+    accepted: [
+      "कः संभाषणं करोति",
+      "कः संभाषण करोति",
+      "कः संभाषणम् करोति",
+      "कः सम्भाषणं करोति",
+      "kah sambhashanam karoti",
+      "kah sambhashan karoti"
+    ]
+  },
+
+  {
+    sanskrit: "महती वृष्टिः ।",
+    meaning: "Heavy rain.",
+    audio: "/audio/mahati-vrishtih.MP3",
+    recognitionLang: "hi-IN",
+    accepted: [
+      "महती वृष्टिः",
+      "महती वृष्टि",
+      "महति वृष्टिः",
+      "महती वृष्टि",
+      "mahati vrishtih",
+      "mahati vrishti"
+    ]
+  },
+
+  {
+    sanskrit: "भवान् किं उद्योगं करोति ?",
+    meaning: "What do you do?",
+    audio: "/audio/bhavan-kim-udyogam-karoti.MP3",
+    recognitionLang: "hi-IN",
+    accepted: [
+      "भवान् किं उद्योगं करोति",
+      "भवान किं उद्योगं करोति",
+      "भवान् किम् उद्योगं करोति",
+      "भवान् किं उद्योग करोति",
+      "भवान किम उद्योगं करोति",
+      "bhavan kim udyogam karoti",
+      "bhavan kim udyog karoti",
+      "bhavan kim udyogam karothee"
+    ]
   }
 ];
+
+const shuffleWords = (words) => {
+  const shuffled = [...words];
+
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+
+    [shuffled[i], shuffled[j]] = [
+      shuffled[j],
+      shuffled[i]
+    ];
+  }
+
+  return shuffled;
+};
 
 const generateIAST = async (sanskritText) => {
   const params = new URLSearchParams({
@@ -183,7 +275,9 @@ const calculateWordCoverage = (target, spoken) => {
 function App() {
   const { user, signOutUser } = useAuth();
 
-  const [words, setWords] = useState(initialWords);
+  const [words, setWords] = useState(() =>
+      shuffleWords(initialWords)
+  );
 
   const [currentWord, setCurrentWord] = useState(0);
   const [transcript, setTranscript] = useState("");
@@ -227,7 +321,7 @@ function App() {
             })
         );
 
-        setWords(updatedWords);
+        setWords(shuffleWords(updatedWords));
       } catch (error) {
         console.error(
             "Could not generate IAST references:",
@@ -287,9 +381,7 @@ function App() {
     console.log("Accepted:", normalizedAnswers);
     console.log("IAST:", word.iast);
 
-    // --------------------------------
     // 1. GREAT
-    // --------------------------------
 
     const exactMatch = normalizedAnswers.some(
         (answer) => answer === normalizedSpeech
@@ -305,9 +397,7 @@ function App() {
       };
     }
 
-    // --------------------------------
     // 2. FIND BEST SIMILARITY
-    // --------------------------------
 
     let bestSimilarity = 0;
     let bestWordCoverage = 0;
@@ -344,9 +434,7 @@ function App() {
         bestWordCoverage
     );
 
-    // --------------------------------
     // 3. ALMOST THERE
-    // --------------------------------
 
     if (
         bestSimilarity >= 0.60 ||
@@ -358,10 +446,9 @@ function App() {
         message:
             "You were close! Listen again and try to pronounce the full phrase.",
         icon: "🟡",
-        score: 50
+        score: 80
       };
     }
-
     // --------------------------------
     // 4. TRY AGAIN
     // --------------------------------
@@ -475,6 +562,10 @@ function App() {
   };
 
   const restartChallenge = () => {
+    setWords((currentWords) =>
+        shuffleWords(currentWords)
+    );
+
     setCurrentWord(0);
     setTranscript("");
     setResult(null);
@@ -544,7 +635,7 @@ function App() {
             <h1>Challenge Complete!</h1>
 
             <p className="instruction">
-              You completed all 5 Sanskrit pronunciation
+              You completed all 10 Sanskrit pronunciation
               challenges.
             </p>
 
@@ -556,7 +647,7 @@ function App() {
                 </div>
 
                 <div className="stat-value">
-                  {score} / 1000
+                  {score} / 2000
                 </div>
               </div>
 
@@ -665,7 +756,7 @@ function App() {
             </div>
 
             <div className="current-score">
-              Score: {score} / 1000
+              Score: {score} / 2000
             </div>
 
           </div>
