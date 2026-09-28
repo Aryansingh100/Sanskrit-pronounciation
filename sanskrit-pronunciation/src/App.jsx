@@ -522,6 +522,22 @@ function App() {
     recognition.start();
   };
 
+  const tryAgain = () => {
+    if (!result) {
+      return;
+    }
+
+    if (result.score === 0) {
+      // -50 points for incorrect answer
+      setScore((currentScore) =>
+          Math.max(0, currentScore - 50)
+      );
+    }
+
+    setResult(null);
+    setTranscript("");
+  };
+
   const continueToNextWord = () => {
     if (!result) {
       return;
@@ -530,13 +546,12 @@ function App() {
     let pointsEarned = 0;
 
     if (result.score === 100) {
-      // Great = 200 points
       pointsEarned = 200;
+
     } else if (result.score === 80) {
-      // Almost There = 100 points
       pointsEarned = 100;
+
     } else {
-      // Try Again = cannot continue
       return;
     }
 
@@ -550,7 +565,6 @@ function App() {
       setResult(null);
       setError("");
     } else {
-      // Final level completed
       const elapsedSeconds = Math.floor(
           (Date.now() - gameStartTime) / 1000
       );
@@ -880,9 +894,9 @@ function App() {
                 {result.score === 0 && (
                     <button
                         className="close-button"
-                        onClick={() => setResult(null)}
+                        onClick={tryAgain}
                     >
-                      Try Again
+                      Try Again (-50)
                     </button>
                 )}
 
