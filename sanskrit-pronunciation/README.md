@@ -1,5 +1,16 @@
 # React + Vite
 
+## Word data
+
+Words are loaded at runtime from `public/data/words.json`. Add another object
+to its `words` array to add a pronunciation challenge. Each word needs
+`sanskrit`, `meaning`, `audio`, and an `accepted` array; `recognitionLang` is
+optional and defaults to `hi-IN`.
+
+Put audio files under `public/audio/` and set `audio` to their root-relative
+URL, for example `/audio/example.mp3`. The maximum score is calculated from
+the number of words in the JSON file.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

@@ -5,8 +5,6 @@ import { useAuth } from "./hooks/useAuth";
 import { useLeaderboard } from "./hooks/useLeaderboard";
 import AuthPanel from "./components/auth/AuthPanel";
 
-import { initialWords } from "./data/words";
-
 const shuffleWords = (words) => {
   const shuffled = [...words];
 
@@ -119,9 +117,9 @@ const calculateWordCoverage = (target, spoken) => {
 function App() {
   const { user, signOutUser } = useAuth();
 
-  const [words, setWords] = useState(() =>
-      shuffleWords(initialWords)
-  );
+  const [words, setWords] = useState([]);
+  const [isLoadingWords, setIsLoadingWords] = useState(true);
+  const [dataError, setDataError] = useState("");
 
   const [currentWord, setCurrentWord] = useState(0);
   const [transcript, setTranscript] = useState("");
@@ -139,42 +137,71 @@ function App() {
   const [showAuth, setShowAuth] = useState(false);
 
   useEffect(() => {
-    const loadIASTReferences = async () => {
+    let cancelled = false;
+
+    const loadWords = async () => {
       try {
-        const updatedWords = await Promise.all(
-            initialWords.map(async (word) => {
+        const response = await fetch("/data/words.json");
+
+        if (!response.ok) {
+          throw new Error("Could not load word data.");
+        }
+
+        const data = await response.json();
+        const validWords = Array.isArray(data.words) &&
+            data.words.length > 0 &&
+            data.words.every((word) =>
+              word.sanskrit &&
+              word.meaning &&
+              word.audio &&
+              Array.isArray(word.accepted)
+            );
+
+        if (!validWords) {
+          throw new Error("Word data has an invalid format.");
+        }
+
+        const shuffledWords = shuffleWords(data.words);
+        setWords(shuffledWords);
+        setIsLoadingWords(false);
+
+        Promise.all(
+            shuffledWords.map(async (word) => {
               try {
-                const iast = await generateIAST(word.sanskrit);
-
-                console.log(
-                    `${word.sanskrit} → ${iast}`
-                );
-
                 return {
                   ...word,
-                  iast
+                  iast: await generateIAST(word.sanskrit)
                 };
               } catch (error) {
                 console.error(
                     `Could not generate IAST for ${word.sanskrit}`,
                     error
                 );
-
                 return word;
               }
             })
-        );
-
-        setWords(shuffleWords(updatedWords));
+        ).then((updatedWords) => {
+          if (!cancelled) {
+            setWords(updatedWords);
+          }
+        });
       } catch (error) {
-        console.error(
-            "Could not generate IAST references:",
-            error
-        );
+        console.error("Could not load words:", error);
+        if (!cancelled) {
+          setDataError(error.message);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingWords(false);
+        }
       }
     };
 
-    loadIASTReferences();
+    loadWords();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const {
@@ -184,6 +211,7 @@ function App() {
   } = useLeaderboard(user);
 
   const word = words[currentWord];
+  const maxScore = words.length * 200;
 
   const normalizeText = (text) => {
     return text
@@ -204,7 +232,7 @@ function App() {
       audio.play().catch(() => {
         setError("The audio could not be played.");
       });
-    } catch (error) {
+    } catch {
       setError("There was a problem playing the audio.");
     }
   };
@@ -385,15 +413,13 @@ function App() {
       return;
     }
 
-    let pointsEarned = 0;
+    const pointsEarned = result.score === 100
+        ? 200
+        : result.score === 80
+          ? 100
+          : 0;
 
-    if (result.score === 100) {
-      pointsEarned = 200;
-
-    } else if (result.score === 80) {
-      pointsEarned = 100;
-
-    } else {
+    if (pointsEarned === 0) {
       return;
     }
 
@@ -449,6 +475,26 @@ function App() {
     );
   };
 
+  if (isLoadingWords) {
+    return (
+        <div className="app">
+          <div className="game-card">
+            <p className="instruction">Loading words...</p>
+          </div>
+        </div>
+    );
+  }
+
+  if (dataError) {
+    return (
+        <div className="app">
+          <div className="game-card">
+            <p className="error">{dataError}</p>
+          </div>
+        </div>
+    );
+  }
+
   /*
    * COMPLETION SCREEN
    */
@@ -491,7 +537,7 @@ function App() {
             <h1>Challenge Complete!</h1>
 
             <p className="instruction">
-              You completed all 10 Sanskrit pronunciation
+              You completed all {words.length} Sanskrit pronunciation
               challenges.
             </p>
 
@@ -503,7 +549,7 @@ function App() {
                 </div>
 
                 <div className="stat-value">
-                  {score} / 2000
+                  {score} / {maxScore}
                 </div>
               </div>
 
@@ -612,7 +658,7 @@ function App() {
             </div>
 
             <div className="current-score">
-              Score: {score} / 2000
+              Score: {score} / {maxScore}
             </div>
 
           </div>
