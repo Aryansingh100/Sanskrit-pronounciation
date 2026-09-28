@@ -5,163 +5,7 @@ import { useAuth } from "./hooks/useAuth";
 import { useLeaderboard } from "./hooks/useLeaderboard";
 import AuthPanel from "./components/auth/AuthPanel";
 
-const initialWords = [
-  {
-    sanskrit: "सुप्रभातम्",
-    meaning: "Good morning",
-    audio: "/audio/suprabhatam.MP3",
-    recognitionLang: "hi-IN",
-    accepted: [
-      "सुप्रभातम्",
-      "सुप्रभातम",
-      "suprabhatam",
-      "suprabhat",
-      "su prabhatam",
-      "su prabhat"
-    ]
-  },
-
-  {
-    sanskrit: "धन्यवादः",
-    meaning: "Thank you",
-    audio: "/audio/dhanyavadah.MP3",
-    recognitionLang: "hi-IN",
-    accepted: [
-      "धन्यवादः",
-      "धन्यवाद",
-      "dhanyavadah",
-      "dhanyavada",
-      "dhanyavad"
-    ]
-  },
-
-  {
-    sanskrit: "स्वागतम् ।",
-    meaning: "Welcome",
-    audio: "/audio/swagatam.MP3",
-    recognitionLang: "hi-IN",
-    accepted: [
-      "स्वागतम्",
-      "स्वागतम",
-      "swagatam",
-      "swagat",
-      "swaagatam",
-      "swāgatam"
-    ]
-  },
-
-  {
-    sanskrit: "चिन्ता मास्तु ।",
-    meaning: "Don't worry",
-    audio: "/audio/chinta-mastu.MP3",
-    recognitionLang: "hi-IN",
-    accepted: [
-      "चिन्ता मास्तु",
-      "चिंता मास्तु",
-      "चिन्ता मास् तु",
-      "चिंता मास् तु",
-      "chinta mastu",
-      "chintā māstu",
-      "chinta maastu",
-      "chinta mastoo"
-    ]
-  },
-
-  {
-    sanskrit: "भवतः नाम किं ?",
-    meaning: "What is your name? (masc.)",
-    audio: "/audio/bhavatah-nama-kim.MP3",
-    recognitionLang: "hi-IN",
-    accepted: [
-      "भवतः नाम किं",
-      "भवतः नाम किम्",
-      "भवतः नाम किम",
-      "भवतो नाम किं",
-      "भवतो नाम किम्",
-      "भगत नाम किम",
-      "bhavatah nama kim",
-      "bhavataha nama kim",
-      "bhavato nama kim"
-    ]
-  },
-
-  {
-    sanskrit: "अहं मातृगृहं गतवती ।",
-    meaning: "I had been to my mother's house.",
-    audio: "/audio/aham-matrigriham-gatavathi.MP3",
-    recognitionLang: "hi-IN",
-    accepted: [
-      "अहं मातृगृहं गतवती",
-      "अहं मातृगृह गतवती",
-      "अहं मातृ गृहं गतवती",
-      "अहम् मातृगृहं गतवती",
-      "aham matrigriham gatavati",
-      "aham matrugriham gatavati"
-    ]
-  },
-
-  {
-    sanskrit: "अत्र हस्तांकनं करोतु ।",
-    meaning: "Sign here, please.",
-    audio: "/audio/atra-hastankanan-karotu.MP3",
-    recognitionLang: "hi-IN",
-    accepted: [
-      "अत्र हस्तांकनं करोतु",
-      "अत्र हस्तांकन करोतु",
-      "अत्र हस्त अंकनं करोतु",
-      "अत्र हस्तांकनम् करोतु",
-      "atra hastankanan karotu",
-      "atra hastankan karotu"
-    ]
-  },
-
-  {
-    sanskrit: "कः संभाषणं करोति ?",
-    meaning: "Who is speaking?",
-    audio: "/audio/kah-sambhashanam-karoti.MP3",
-    recognitionLang: "hi-IN",
-    accepted: [
-      "कः संभाषणं करोति",
-      "कः संभाषण करोति",
-      "कः संभाषणम् करोति",
-      "कः सम्भाषणं करोति",
-      "kah sambhashanam karoti",
-      "kah sambhashan karoti"
-    ]
-  },
-
-  {
-    sanskrit: "महती वृष्टिः ।",
-    meaning: "Heavy rain.",
-    audio: "/audio/mahati-vrishtih.MP3",
-    recognitionLang: "hi-IN",
-    accepted: [
-      "महती वृष्टिः",
-      "महती वृष्टि",
-      "महति वृष्टिः",
-      "महती वृष्टि",
-      "mahati vrishtih",
-      "mahati vrishti"
-    ]
-  },
-
-  {
-    sanskrit: "भवान् किं उद्योगं करोति ?",
-    meaning: "What do you do?",
-    audio: "/audio/bhavan-kim-udyogam-karoti.MP3",
-    recognitionLang: "hi-IN",
-    accepted: [
-      "भवान् किं उद्योगं करोति",
-      "भवान किं उद्योगं करोति",
-      "भवान् किम् उद्योगं करोति",
-      "भवान् किं उद्योग करोति",
-      "भवान किम उद्योगं करोति",
-      "bhavan kim udyogam karoti",
-      "bhavan kim udyog karoti",
-      "bhavan kim udyogam karothee"
-    ]
-  }
-];
+import { initialWords } from "./data/words";
 
 const shuffleWords = (words) => {
   const shuffled = [...words];
@@ -437,8 +281,8 @@ function App() {
     // 3. ALMOST THERE
 
     if (
-        bestSimilarity >= 0.60 ||
-        bestWordCoverage >= 0.60
+        bestSimilarity >= 0.50 ||
+        bestWordCoverage >= 0.50
     ) {
       return {
         level: "almost",
@@ -449,9 +293,7 @@ function App() {
         score: 80
       };
     }
-    // --------------------------------
     // 4. TRY AGAIN
-    // --------------------------------
 
     return {
       level: "try-again",

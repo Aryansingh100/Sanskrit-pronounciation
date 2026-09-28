@@ -32,17 +32,9 @@ export function useLeaderboard(user) {
             );
 
             if (updated) {
-
                 setMessage(
-                    "Score submitted to the leaderboard!"
+                    "Score added to the leaderboard!"
                 );
-
-            } else {
-
-                setMessage(
-                    "Your leaderboard score is already higher."
-                );
-
             }
 
             return updated;
