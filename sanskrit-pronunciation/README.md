@@ -1,15 +1,26 @@
 # React + Vite
 
-## Word data
+## Word Bank
 
-Words are loaded at runtime from `public/data/words.json`. Add another object
-to its `words` array to add a pronunciation challenge. Each word needs
-`sanskrit`, `meaning`, `audio`, and an `accepted` array; `recognitionLang` is
-optional and defaults to `hi-IN`.
+Words are loaded at runtime from Firestore collection `words`, document
+`words_1`, field `words`. The Firestore connection and document path are
+configured in `src/wordbank-config.js`. Each word needs `sanskrit`, `meaning`,
+`audio`, and an `accepted` array; `recognitionLang` is optional and defaults to
+`hi-IN`.
+
+The app only reads this public word bank. Firestore Security Rules must allow
+reads for this document and should deny writes from the client:
+
+```text
+match /words/words_1 {
+	allow get: if true;
+	allow write: if false;
+}
+```
 
 Put audio files under `public/audio/` and set `audio` to their root-relative
 URL, for example `/audio/example.mp3`. The maximum score is calculated from
-the number of words in the JSON file.
+the number of words returned by Firestore.
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

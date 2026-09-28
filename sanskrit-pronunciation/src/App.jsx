@@ -4,6 +4,7 @@ import "./App.css";
 import { useAuth } from "./hooks/useAuth";
 import { useLeaderboard } from "./hooks/useLeaderboard";
 import AuthPanel from "./components/auth/AuthPanel";
+import { getWordBankWords } from "./services/wordBankService";
 
 const shuffleWords = (words) => {
   const shuffled = [...words];
@@ -141,27 +142,8 @@ function App() {
 
     const loadWords = async () => {
       try {
-        const response = await fetch("/data/words.json");
-
-        if (!response.ok) {
-          throw new Error("Could not load word data.");
-        }
-
-        const data = await response.json();
-        const validWords = Array.isArray(data.words) &&
-            data.words.length > 0 &&
-            data.words.every((word) =>
-              word.sanskrit &&
-              word.meaning &&
-              word.audio &&
-              Array.isArray(word.accepted)
-            );
-
-        if (!validWords) {
-          throw new Error("Word data has an invalid format.");
-        }
-
-        const shuffledWords = shuffleWords(data.words);
+        const words = await getWordBankWords();
+        const shuffledWords = shuffleWords(words);
         setWords(shuffledWords);
         setIsLoadingWords(false);
 
@@ -186,9 +168,11 @@ function App() {
           }
         });
       } catch (error) {
-        console.error("Could not load words:", error);
+        console.error("Could not load word bank:", error);
         if (!cancelled) {
-          setDataError(error.message);
+          setDataError(error.code === "permission-denied"
+              ? "Word bank access denied. Allow read access to Firestore document words/words_1."
+              : error.message);
         }
       } finally {
         if (!cancelled) {
