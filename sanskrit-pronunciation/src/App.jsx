@@ -135,9 +135,34 @@ function App() {
   const [gameStartTime, setGameStartTime] = useState(() => Date.now());
   const [timePlayedInSeconds, setTimePlayedInSeconds] = useState(0);
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
+  const [zeroPercentWords, setZeroPercentWords] = useState([]);
 
   // Authentication popup
   const [showAuth, setShowAuth] = useState(false);
+
+  useEffect(() => {
+    if (result?.score !== 0) {
+      return;
+    }
+
+    const word = words[currentWord];
+
+    if (!word) {
+      return;
+    }
+
+    setZeroPercentWords((previousWords) => {
+      const alreadyExists = previousWords.some(
+          (existingWord) => existingWord.id === word.id
+      );
+
+      if (alreadyExists) {
+        return previousWords;
+      }
+
+      return [...previousWords, word];
+    });
+  }, [result, currentWord, words]);
 
   useEffect(() => {
     const loadIASTReferences = async () => {
@@ -427,6 +452,7 @@ function App() {
     setError("");
     setCompleted(false);
     setScoreSubmitted(false);
+    setZeroPercentWords([]);
 
     setScore(0);
     setTimePlayedInSeconds(0);
@@ -531,6 +557,43 @@ function App() {
               </div>
 
             </div>
+
+          </div>
+
+          <div className="zero-percent-section">
+            <h2>Words to Practice</h2>
+
+            {zeroPercentWords.length === 0 ? (
+                <p>
+                  Great job! You didn't get 0% on any word.
+                </p>
+            ) : (
+                <>
+                  <p>
+                    You got 0% on the following words:
+                  </p>
+
+                  <div className="zero-percent-word-list">
+                    {zeroPercentWords.map((word) => (
+                        <div
+                            className="zero-percent-word"
+                            key={word.id}
+                        >
+                          <div className="zero-percent-sanskrit">
+                            {word.sanskrit}
+                          </div>
+
+                          <div className="zero-percent-meaning">
+                            {word.meaning}
+                          </div>
+                        </div>
+                    ))}
+                  </div>
+                </>
+            )}
+          </div>
+
+          <div className="leaderboard-section">
 
             <div className="leaderboard-section">
 
