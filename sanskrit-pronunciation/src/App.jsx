@@ -133,17 +133,43 @@ function App() {
   const [score, setScore] = useState(0);
   const [gameStartTime, setGameStartTime] = useState(() => Date.now());
   const [timePlayedInSeconds, setTimePlayedInSeconds] = useState(0);
+  const [scoreSubmitted, setScoreSubmitted] = useState(false);
+  const [zeroPercentWords, setZeroPercentWords] = useState([]);
 
   // Authentication popup
   const [showAuth, setShowAuth] = useState(false);
+
+  useEffect(() => {
+    if (result?.score !== 0) {
+      return;
+    }
+
+    const word = words[currentWord];
+
+    if (!word) {
+      return;
+    }
+
+    setZeroPercentWords((previousWords) => {
+      const alreadyExists = previousWords.some(
+          (existingWord) => existingWord.id === word.id
+      );
+
+      if (alreadyExists) {
+        return previousWords;
+      }
+
+      return [...previousWords, word];
+    });
+  }, [result, currentWord, words]);
 
   useEffect(() => {
     let cancelled = false;
 
     const loadWords = async () => {
       try {
-        const words = await getWordBankWords();
-        const shuffledWords = shuffleWords(words);
+        const loadedWords = await getWordBankWords();
+        const shuffledWords = shuffleWords(loadedWords);
         setWords(shuffledWords);
         setIsLoadingWords(false);
 
@@ -195,7 +221,7 @@ function App() {
   } = useLeaderboard(user);
 
   const word = words[currentWord];
-  const maxScore = words.length * 200;
+  const maxScore = words.length * 50 + 100;
 
   const normalizeText = (text) => {
     return text
@@ -377,30 +403,23 @@ function App() {
   };
 
   const tryAgain = () => {
-    if (!result) {
-      return;
-    }
+    if (!result) return;
 
-    if (result.score === 0) {
-      // -50 points for incorrect answer
-      setScore((currentScore) =>
-          Math.max(0, currentScore - 50)
-      );
-    }
+    setScore((currentScore) =>
+        Math.max(0, currentScore - 5)
+    );
 
     setResult(null);
     setTranscript("");
   };
 
   const continueToNextWord = () => {
-    if (!result) {
-      return;
-    }
+    if (!result) return;
 
     const pointsEarned = result.score === 100
-        ? 200
+        ? 50
         : result.score === 80
-          ? 100
+          ? 40
           : 0;
 
     if (pointsEarned === 0) {
@@ -409,14 +428,13 @@ function App() {
 
     const newScore = score + pointsEarned;
 
-    setScore(newScore);
+    // Last word
+    if (currentWord === words.length - 1) {
+      const completionBonus = 100;
+      const finalScore = newScore + completionBonus;
 
-    if (currentWord < words.length - 1) {
-      setCurrentWord(currentWord + 1);
-      setTranscript("");
-      setResult(null);
-      setError("");
-    } else {
+      setScore(finalScore);
+
       const elapsedSeconds = Math.floor(
           (Date.now() - gameStartTime) / 1000
       );
@@ -424,7 +442,15 @@ function App() {
       setTimePlayedInSeconds(elapsedSeconds);
       setCompleted(true);
       setResult(null);
+      return;
     }
+
+    // Move to the next word
+    setScore(newScore);
+    setCurrentWord(currentWord + 1);
+    setTranscript("");
+    setResult(null);
+    setError("");
   };
 
   const restartChallenge = () => {
@@ -437,6 +463,8 @@ function App() {
     setResult(null);
     setError("");
     setCompleted(false);
+    setScoreSubmitted(false);
+    setZeroPercentWords([]);
 
     setScore(0);
     setTimePlayedInSeconds(0);
@@ -453,10 +481,23 @@ function App() {
   };
 
   const handleSubmitScore = async () => {
-    await submitLeaderboardScore(
-        score,
-        timePlayedInSeconds
-    );
+    if (!user || scoreSubmitted || submittingScore) {
+      return;
+    }
+
+    try {
+      await submitLeaderboardScore(
+          score,
+          timePlayedInSeconds
+      );
+
+      setScoreSubmitted(true);
+    } catch (error) {
+      console.error(
+          "Failed to submit leaderboard score:",
+          error
+      );
+    }
   };
 
   if (isLoadingWords) {
@@ -549,6 +590,43 @@ function App() {
 
             </div>
 
+          </div>
+
+          <div className="zero-percent-section">
+            <h2>Words to Practice</h2>
+
+            {zeroPercentWords.length === 0 ? (
+                <p>
+                  Great job! You didn't get 0% on any word.
+                </p>
+            ) : (
+                <>
+                  <p>
+                    You got 0% on the following words:
+                  </p>
+
+                  <div className="zero-percent-word-list">
+                    {zeroPercentWords.map((word) => (
+                        <div
+                            className="zero-percent-word"
+                            key={word.id}
+                        >
+                          <div className="zero-percent-sanskrit">
+                            {word.sanskrit}
+                          </div>
+
+                          <div className="zero-percent-meaning">
+                            {word.meaning}
+                          </div>
+                        </div>
+                    ))}
+                  </div>
+                </>
+            )}
+          </div>
+
+          <div className="leaderboard-section">
+
             <div className="leaderboard-section">
 
               <h2>Leaderboard</h2>
@@ -562,13 +640,17 @@ function App() {
 
               {user && (
                   <button
-                      className="submit-score-button"
                       onClick={handleSubmitScore}
-                      disabled={submittingScore}
+                      disabled={
+                          submittingScore ||
+                          scoreSubmitted
+                      }
                   >
                     {submittingScore
                         ? "Submitting..."
-                        : "🏆 Submit Score"}
+                        : scoreSubmitted
+                            ? "Score Submitted"
+                            : "Submit Score"}
                   </button>
               )}
 
@@ -741,7 +823,7 @@ function App() {
                         className="close-button"
                         onClick={continueToNextWord}
                     >
-                      Continue (+200)
+                      Continue (+50)
                     </button>
                 )}
 
@@ -751,7 +833,7 @@ function App() {
                           className="close-button"
                           onClick={continueToNextWord}
                       >
-                        Continue (+100)
+                        Continue (+40)
                       </button>
 
                       <button
@@ -768,7 +850,7 @@ function App() {
                         className="close-button"
                         onClick={tryAgain}
                     >
-                      Try Again (-50)
+                      Try Again (-5)
                     </button>
                 )}
 
