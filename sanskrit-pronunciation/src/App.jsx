@@ -134,6 +134,7 @@ function App() {
   const [score, setScore] = useState(0);
   const [gameStartTime, setGameStartTime] = useState(() => Date.now());
   const [timePlayedInSeconds, setTimePlayedInSeconds] = useState(0);
+  const [scoreSubmitted, setScoreSubmitted] = useState(false);
 
   // Authentication popup
   const [showAuth, setShowAuth] = useState(false);
@@ -365,48 +366,38 @@ function App() {
   };
 
   const tryAgain = () => {
-    if (!result) {
-      return;
-    }
+    if (!result) return;
 
-    if (result.score === 0) {
-      // -50 points for incorrect answer
-      setScore((currentScore) =>
-          Math.max(0, currentScore - 50)
-      );
-    }
+    setScore((currentScore) =>
+        Math.max(0, currentScore - 5)
+    );
 
     setResult(null);
     setTranscript("");
   };
 
   const continueToNextWord = () => {
-    if (!result) {
-      return;
-    }
+    if (!result) return;
 
     let pointsEarned = 0;
 
     if (result.score === 100) {
-      pointsEarned = 200;
-
+      pointsEarned = 50;
     } else if (result.score === 80) {
-      pointsEarned = 100;
-
+      pointsEarned = 40;
     } else {
       return;
     }
 
     const newScore = score + pointsEarned;
 
-    setScore(newScore);
+    // Last word
+    if (currentWord === words.length - 1) {
+      const completionBonus = 100;
+      const finalScore = newScore + completionBonus;
 
-    if (currentWord < words.length - 1) {
-      setCurrentWord(currentWord + 1);
-      setTranscript("");
-      setResult(null);
-      setError("");
-    } else {
+      setScore(finalScore);
+
       const elapsedSeconds = Math.floor(
           (Date.now() - gameStartTime) / 1000
       );
@@ -414,7 +405,15 @@ function App() {
       setTimePlayedInSeconds(elapsedSeconds);
       setCompleted(true);
       setResult(null);
+      return;
     }
+
+    // Move to the next word
+    setScore(newScore);
+    setCurrentWord(currentWord + 1);
+    setTranscript("");
+    setResult(null);
+    setError("");
   };
 
   const restartChallenge = () => {
@@ -427,6 +426,7 @@ function App() {
     setResult(null);
     setError("");
     setCompleted(false);
+    setScoreSubmitted(false);
 
     setScore(0);
     setTimePlayedInSeconds(0);
@@ -443,10 +443,23 @@ function App() {
   };
 
   const handleSubmitScore = async () => {
-    await submitLeaderboardScore(
-        score,
-        timePlayedInSeconds
-    );
+    if (!user || scoreSubmitted || submittingScore) {
+      return;
+    }
+
+    try {
+      await submitLeaderboardScore(
+          score,
+          timePlayedInSeconds
+      );
+
+      setScoreSubmitted(true);
+    } catch (error) {
+      console.error(
+          "Failed to submit leaderboard score:",
+          error
+      );
+    }
   };
 
   /*
@@ -503,7 +516,7 @@ function App() {
                 </div>
 
                 <div className="stat-value">
-                  {score} / 2000
+                  {score} / {words.length * 50 + 100}
                 </div>
               </div>
 
@@ -532,13 +545,17 @@ function App() {
 
               {user && (
                   <button
-                      className="submit-score-button"
                       onClick={handleSubmitScore}
-                      disabled={submittingScore}
+                      disabled={
+                          submittingScore ||
+                          scoreSubmitted
+                      }
                   >
                     {submittingScore
                         ? "Submitting..."
-                        : "🏆 Submit Score"}
+                        : scoreSubmitted
+                            ? "Score Submitted"
+                            : "Submit Score"}
                   </button>
               )}
 
@@ -612,7 +629,7 @@ function App() {
             </div>
 
             <div className="current-score">
-              Score: {score} / 2000
+              Score: {score} / {words.length * 50 + 100}
             </div>
 
           </div>
@@ -711,7 +728,7 @@ function App() {
                         className="close-button"
                         onClick={continueToNextWord}
                     >
-                      Continue (+200)
+                      Continue (+50)
                     </button>
                 )}
 
@@ -721,7 +738,7 @@ function App() {
                           className="close-button"
                           onClick={continueToNextWord}
                       >
-                        Continue (+100)
+                        Continue (+40)
                       </button>
 
                       <button
@@ -738,7 +755,7 @@ function App() {
                         className="close-button"
                         onClick={tryAgain}
                     >
-                      Try Again (-50)
+                      Try Again (-5)
                     </button>
                 )}
 
