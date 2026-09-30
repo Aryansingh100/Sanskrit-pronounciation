@@ -27,11 +27,7 @@ export async function postScore(
             .toISOString()
             .split("T")[0];
 
-        /*
-         * --------------------------------
-         * SAVE GAME COMPLETION
-         * --------------------------------
-         */
+        console.log("STEP 1: Writing game-completions...");
 
         await addDoc(
             collection(db, "game-completions"),
@@ -49,11 +45,9 @@ export async function postScore(
             }
         );
 
-        /*
-         * --------------------------------
-         * DAILY SCORE
-         * --------------------------------
-         */
+        console.log(
+            "STEP 1 SUCCESS: game-completions"
+        );
 
         const dailyRecordId =
             `${currentUser.uid}_${GAME_ID}_${today}`;
@@ -64,8 +58,16 @@ export async function postScore(
             dailyRecordId
         );
 
+        console.log(
+            "STEP 2: Reading daily leaderboard..."
+        );
+
         const existingDaily =
             await getDoc(dailyScoreRef);
+
+        console.log(
+            "STEP 2 SUCCESS: Reading daily leaderboard"
+        );
 
         const existingDailyScore =
             existingDaily.exists()
@@ -85,6 +87,10 @@ export async function postScore(
             existingDailyTime +
             timePlayedInSeconds;
 
+        console.log(
+            "STEP 3: Writing daily leaderboard..."
+        );
+
         await setDoc(dailyScoreRef, {
             userId: currentUser.uid,
             playerName:
@@ -100,11 +106,9 @@ export async function postScore(
             updatedAt: serverTimestamp()
         });
 
-        /*
-         * --------------------------------
-         * ALL TIME SCORE
-         * --------------------------------
-         */
+        console.log(
+            "STEP 3 SUCCESS: Daily leaderboard"
+        );
 
         const allTimeRecordId =
             `${currentUser.uid}_${GAME_ID}_alltime`;
@@ -115,8 +119,16 @@ export async function postScore(
             allTimeRecordId
         );
 
+        console.log(
+            "STEP 4: Reading all-time leaderboard..."
+        );
+
         const existingAllTime =
             await getDoc(allTimeScoreRef);
+
+        console.log(
+            "STEP 4 SUCCESS: Reading all-time leaderboard"
+        );
 
         const existingAllTimeScore =
             existingAllTime.exists()
@@ -136,6 +148,10 @@ export async function postScore(
             existingAllTimeTime +
             timePlayedInSeconds;
 
+        console.log(
+            "STEP 5: Writing all-time leaderboard..."
+        );
+
         await setDoc(allTimeScoreRef, {
             userId: currentUser.uid,
             playerName:
@@ -151,12 +167,21 @@ export async function postScore(
             updatedAt: serverTimestamp()
         });
 
+        console.log(
+            "STEP 5 SUCCESS: All-time leaderboard"
+        );
+
         return true;
 
     } catch (error) {
+
         console.error(
             "Leaderboard submission failed:",
             error
+        );
+
+        console.error(
+            "Permission error occurred during one of the steps above."
         );
 
         throw error;
