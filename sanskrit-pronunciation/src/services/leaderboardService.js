@@ -1,5 +1,6 @@
 import {
     db,
+    auth,
     doc,
     getDoc,
     setDoc,
@@ -18,7 +19,10 @@ export async function postScore(
     finalScore,
     timePlayedInSeconds
 ) {
-    if (!currentUser) {
+    const firebaseUser = auth.currentUser;
+
+    if (!firebaseUser) {
+        console.error("No Firebase user is currently signed in.");
         return false;
     }
 
@@ -28,6 +32,10 @@ export async function postScore(
             .split("T")[0];
 
         console.log("STEP 1: Writing game-completions...");
+
+        console.log("CURRENT USER:", currentUser);
+        console.log("CURRENT USER UID:", currentUser?.uid);
+        console.log("CURRENT USER EMAIL:", currentUser?.email);
 
         await addDoc(
             collection(db, "game-completions"),
