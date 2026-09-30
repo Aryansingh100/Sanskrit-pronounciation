@@ -474,15 +474,17 @@ function App() {
     }
 
     try {
-      await submitLeaderboardScore(
+      const success = await submitLeaderboardScore(
           score,
           timePlayedInSeconds
       );
 
-      setScoreSubmitted(true);
+      if (success) {
+        setScoreSubmitted(true);
+      }
     } catch (error) {
       console.error(
-          "Failed to submit leaderboard score:",
+          "Leaderboard submission error:",
           error
       );
     }

@@ -42,8 +42,22 @@ export function useLeaderboard(user) {
         } catch (error) {
 
             console.error(
-                "Failed to update leaderboard:",
+                "FAILED LEADERBOARD SUBMISSION"
+            );
+
+            console.error(
+                "Error object:",
                 error
+            );
+
+            console.error(
+                "Error code:",
+                error?.code
+            );
+
+            console.error(
+                "Error message:",
+                error?.message
             );
 
             setMessage(
