@@ -6,6 +6,8 @@ import { useLeaderboard } from "./hooks/useLeaderboard";
 import AuthPanel from "./components/auth/AuthPanel";
 import { getWordBankWords } from "./services/wordBankService";
 
+const WORD_BANK_DOCUMENT_ID = "words_1";
+
 const shuffleWords = (words) => {
   const shuffled = [...words];
 
@@ -168,7 +170,7 @@ function App() {
 
     const loadWords = async () => {
       try {
-        const loadedWords = await getWordBankWords();
+        const loadedWords = await getWordBankWords(WORD_BANK_DOCUMENT_ID);
         const shuffledWords = shuffleWords(loadedWords);
         setWords(shuffledWords);
         setIsLoadingWords(false);
@@ -197,7 +199,7 @@ function App() {
         console.error("Could not load word bank:", error);
         if (!cancelled) {
           setDataError(error.code === "permission-denied"
-              ? "Word bank access denied. Allow read access to Firestore document words/words_1."
+              ? "Word bank access denied. Allow read access to the selected document in the Firestore words collection."
               : error.message);
         }
       } finally {
