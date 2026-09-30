@@ -2,17 +2,19 @@
 
 ## Word Bank
 
-Words are loaded at runtime from Firestore collection `words`, document
-`words_1`, field `words`. The Firestore connection and document path are
-configured in `src/wordbank-config.js`. Each word needs `sanskrit`, `meaning`,
-`audio`, and an `accepted` array; `recognitionLang` is optional and defaults to
-`hi-IN`.
+Words are loaded at runtime from one selected document in the Firestore
+collection `words`. The document ID is passed to `getWordBankWords(documentId)`;
+the app currently hardcodes `words_1` in `src/App.jsx`. This keeps the selected
+document ready to be bound to a future level or category selector. Each
+document stores its word array in the `words` field. Each word
+needs `sanskrit`, `meaning`, `audio`, and an `accepted` array;
+`recognitionLang` is optional and defaults to `hi-IN`.
 
 The app only reads this public word bank. Firestore Security Rules must allow
 reads for this document and should deny writes from the client:
 
 ```text
-match /words/words_1 {
+match /words/{wordBankDocument} {
 	allow get: if true;
 	allow write: if false;
 }

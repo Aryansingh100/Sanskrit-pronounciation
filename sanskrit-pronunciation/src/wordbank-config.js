@@ -12,7 +12,6 @@ export const wordBankConfig = {
     measurementId: "G-QD9C2BKS70"
   },
   collection: "words",
-  documentId: "words_1",
   field: "words"
 };
 

@@ -1,17 +1,21 @@
 import { doc, getDoc } from "firebase/firestore";
 import { wordBankConfig, wordBankDb } from "../wordbank-config";
 
-export async function getWordBankWords() {
+export async function getWordBankWords(documentId) {
+  if (!documentId) {
+    throw new Error("A word bank document ID is required.");
+  }
+
   const wordBankRef = doc(
       wordBankDb,
       wordBankConfig.collection,
-      wordBankConfig.documentId
+      documentId
   );
   const wordBankSnapshot = await getDoc(wordBankRef);
 
   if (!wordBankSnapshot.exists()) {
     throw new Error(
-        `Word bank document "${wordBankConfig.documentId}" was not found.`
+        `Word bank document "${documentId}" was not found.`
     );
   }
 
@@ -29,5 +33,8 @@ export async function getWordBankWords() {
     throw new Error("Word data has an invalid format.");
   }
 
-  return words;
+  return words.map((word, index) => ({
+    ...word,
+    id: word.id ?? `${documentId}_${index}`
+  }));
 }
