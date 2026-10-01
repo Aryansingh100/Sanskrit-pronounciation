@@ -31,7 +31,7 @@ export async function postScore(
             .toISOString()
             .split("T")[0];
 
-        console.log("STEP 1: Writing game-completions...");
+/*        console.log("STEP 1: Writing game-completions...");
 
         console.log("CURRENT USER:", currentUser);
         console.log("CURRENT USER UID:", currentUser?.uid);
@@ -56,6 +56,8 @@ export async function postScore(
         console.log(
             "STEP 1 SUCCESS: game-completions"
         );
+
+ */
 
         const dailyRecordId =
             `${currentUser.uid}_${GAME_ID}_${today}`;
