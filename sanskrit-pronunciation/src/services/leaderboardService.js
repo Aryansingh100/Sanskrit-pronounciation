@@ -40,79 +40,6 @@ export async function postScore(
             .toISOString()
             .split("T")[0];
 
-        const yesterday = new Date();
-
-        yesterday.setUTCDate(
-            yesterday.getUTCDate() - 1
-        );
-
-        const yesterdayString =
-            yesterday.toISOString().split("T")[0];
-
-        let newDailyStreak = existingDailyStreak;
-        let dailyBonus = 0;
-        let dailyBonusEarned = false;
-
-        // DAILY BONUS
-
-        if (lastPlayedDate === today) {
-
-            // Player already completed a game today.
-            // Do not give another daily bonus.
-
-            newDailyStreak = existingDailyStreak;
-
-            console.log(
-                "Daily bonus already received today."
-            );
-
-        } else {
-
-            dailyBonusEarned = true;
-
-            if (
-                lastPlayedDate === yesterdayString
-            ) {
-
-                newDailyStreak =
-                    existingDailyStreak + 1;
-
-            } else {
-
-                // First day or player missed a day
-                newDailyStreak = 1;
-            }
-
-
-            // =========================================
-            // DETERMINE BONUS AMOUNT
-            // =========================================
-
-            if (newDailyStreak >= 6) {
-
-                dailyBonus = DAILY_BONUS_MAX;
-
-            } else if (newDailyStreak >= 3) {
-
-                dailyBonus = DAILY_BONUS_MIDDLE;
-
-            } else {
-
-                dailyBonus = DAILY_BONUS_START;
-            }
-
-
-            console.log(
-                "Daily streak:",
-                newDailyStreak
-            );
-
-            console.log(
-                "Daily bonus:",
-                dailyBonus
-            );
-        }
-
         // =========================================
         // DAILY LEADERBOARD
         // =========================================
@@ -202,8 +129,7 @@ export async function postScore(
 
         const existingAllTimeTime =
             existingAllTime.exists()
-                ? existingAllTime.data()
-                .timePlayedInSeconds || 0
+                ? existingAllTime.data().timePlayedInSeconds || 0
                 : 0;
 
         const existingStreak =
@@ -229,17 +155,81 @@ export async function postScore(
             existingAllTimeTime +
             timePlayedInSeconds;
 
+        let newDailyStreak = existingDailyStreak;
+        let dailyBonus = 0;
+        let dailyBonusEarned = false;
+
+        const yesterday = new Date();
+
+        yesterday.setUTCDate(
+            yesterday.getUTCDate() - 1
+        );
+
+        const yesterdayString =
+            yesterday.toISOString().split("T")[0];
+
+        if (lastPlayedDate === today) {
+
+            // Already played today.
+            // No daily bonus.
+            newDailyStreak = existingDailyStreak;
+
+            console.log(
+                "Daily bonus already received today."
+            );
+
+        } else {
+
+            dailyBonusEarned = true;
+
+            if (lastPlayedDate === yesterdayString) {
+
+                newDailyStreak =
+                    existingDailyStreak + 1;
+
+            } else {
+
+                // First day or missed a day.
+                newDailyStreak = 1;
+            }
+
+            if (newDailyStreak >= 6) {
+
+                dailyBonus = 40;
+
+            } else if (newDailyStreak >= 3) {
+
+                dailyBonus = 30;
+
+            } else {
+
+                dailyBonus = 20;
+            }
+
+            console.log(
+                "Daily streak:",
+                newDailyStreak
+            );
+
+            console.log(
+                "Daily bonus:",
+                dailyBonus
+            );
+        }
+
         // =========================================
         // CALCULATE NEW STREAK
         // =========================================
 
-        let newStreak =
-            existingStreak + 1;
+        const gameStreakBefore = existingStreak;
 
-        const streakCompleted =
-            newStreak === 3;
+        let newStreak = existingStreak + 1;
+        let gameStreakCompleted = false;
+        let gameStreakBonus = 0;
 
-        if (streakCompleted) {
+        if (newStreak === 3) {
+            gameStreakCompleted = true;
+            gameStreakBonus = 30;
             newStreak = 0;
         }
 
@@ -255,9 +245,8 @@ export async function postScore(
 
         console.log(
             "Streak completed:",
-            streakCompleted
+            gameStreakCompleted
         );
-
 
         // =========================================
         // WRITE ALL-TIME SCORE
@@ -332,7 +321,7 @@ export async function postScore(
         // STREAK BONUS
         // =========================================
 
-        if (streakCompleted) {
+        if (gameStreakCompleted) {
 
             console.log(
                 "3 GAME STREAK! Adding +30 bonus."
@@ -358,7 +347,18 @@ export async function postScore(
             );
         }
 
-        return true;
+        return {
+            success: true,
+
+            gameStreakBefore: gameStreakBefore,
+            gameStreak: newStreak,
+            gameStreakCompleted: gameStreakCompleted,
+            gameStreakBonus: gameStreakBonus,
+
+            dailyStreak: newDailyStreak,
+            dailyBonus: dailyBonus,
+            dailyBonusEarned: dailyBonusEarned
+        };
 
     } catch (error) {
 

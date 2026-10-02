@@ -4,7 +4,7 @@
 
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: "Segoe UI", Arial, sans-serif;
   background: #fff3e0;
   color: black;
 }
@@ -19,6 +19,77 @@ body {
   box-sizing: border-box;
 }
 
+.completion-content {
+  width: 100%;
+  max-width: 700px;
+}
+
+.completion-page {
+  min-height: 100vh;
+  padding: 30px;
+  box-sizing: border-box;
+}
+
+.zero-percent-section {
+  margin-top: 25px;
+  padding: 25px 30px;
+
+  background: #ffffff;
+  border-radius: 20px;
+
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+
+  box-sizing: border-box;
+}
+
+.zero-percent-section h2 {
+  margin-top: 0;
+  margin-bottom: 8px;
+
+  color: #2f5d8c;
+  font-size: 24px;
+}
+
+.zero-percent-section > p {
+  margin-top: 0;
+  margin-bottom: 20px;
+
+  color: #666666;
+}
+
+.zero-percent-word-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.zero-percent-word {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 15px 18px;
+
+  background: #fff8e7;
+  border-radius: 12px;
+
+  border: 1px solid #ffe0b2;
+}
+
+.zero-percent-sanskrit {
+  font-size: 20px;
+  font-weight: bold;
+  color: #4a4a4a;
+}
+
+.zero-percent-meaning {
+  font-size: 14px;
+  color: #777777;
+}
+
+.completion-content .game-card {
+  max-width: 700px;
+}
 
 /* =========================
    MAIN GAME CARD
@@ -38,6 +109,8 @@ body {
 .game-card h1 {
   color: #2f5d8c;
   margin-bottom: 10px;
+  font-size: 32px;
+  font-weight: 700;
 }
 
 .game-card p {
@@ -352,6 +425,77 @@ button:disabled {
   color: #2f5d8c;
 }
 
+/* BONUS */
+
+.bonus-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.45);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 1000;
+}
+
+.bonus-popup {
+  width: 90%;
+  max-width: 450px;
+
+  padding: 30px;
+
+  background: white;
+  border-radius: 16px;
+
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+
+  text-align: center;
+}
+
+.bonus-popup h2 {
+  margin-bottom: 20px;
+}
+
+.bonus-popup-section {
+  margin-bottom: 20px;
+  padding: 15px;
+
+  background: #fff4e6;
+  border-radius: 10px;
+}
+
+.bonus-popup-section strong {
+  font-size: 18px;
+}
+
+.bonus-popup-section p {
+  margin: 8px 0 0;
+}
+
+.bonus-earned {
+  font-weight: bold;
+}
+
+.bonus-popup-ok {
+  padding: 10px 30px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #f4a261;
+  color: white;
+
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.bonus-popup-ok:hover {
+  background: #e76f51;
+}
 
 /* =========================
    LEADERBOARD
@@ -501,6 +645,24 @@ button:disabled {
 
   .game-card {
     padding: 25px 20px;
+  }
+
+  .completion-content {
+    width: 100%;
+  }
+
+  .completion-content .game-card {
+    max-width: 100%;
+  }
+
+  .zero-percent-section {
+    padding: 20px;
+  }
+
+  .zero-percent-word {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
   }
 
   .game-info {

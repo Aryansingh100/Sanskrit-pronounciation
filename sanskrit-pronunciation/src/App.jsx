@@ -136,6 +136,7 @@ function App() {
   const [gameStartTime, setGameStartTime] = useState(() => Date.now());
   const [timePlayedInSeconds, setTimePlayedInSeconds] = useState(0);
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
+  const [bonusPopup, setBonusPopup] = useState(null);
   const [zeroPercentWords, setZeroPercentWords] = useState([]);
 
   // Authentication popup
@@ -488,13 +489,21 @@ function App() {
     }
 
     try {
-      const success = await submitLeaderboardScore(
+      const result = await submitLeaderboardScore(
           score,
           timePlayedInSeconds
       );
 
-      if (success) {
+      if (result?.success) {
         setScoreSubmitted(true);
+
+        setBonusPopup({
+          gameStreak: result.gameStreak,
+          gameStreakBonus: result.gameStreakBonus,
+          dailyStreak: result.dailyStreak,
+          dailyBonus: result.dailyBonus,
+          dailyBonusEarned: result.dailyBonusEarned
+        });
       }
     } catch (error) {
       console.error(
@@ -594,8 +603,6 @@ function App() {
 
             </div>
 
-          </div>
-
           <div className="zero-percent-section">
             <h2>Words to Practice</h2>
 
@@ -628,6 +635,8 @@ function App() {
                 </>
             )}
           </div>
+
+        </div>
 
           <div className="leaderboard-section">
 
@@ -672,6 +681,79 @@ function App() {
             >
               🔄 Start Again
             </button>
+
+            {bonusPopup && (
+                <div className="bonus-popup-overlay">
+                  <div className="bonus-popup">
+                    <h2>Score Submitted!</h2>
+
+                    <div className="bonus-popup-section">
+                      <strong>Game Streak</strong>
+
+                      <p>
+                        Current streak:{" "}
+                        <strong>
+                          {bonusPopup.gameStreak} game
+                          {bonusPopup.gameStreak !== 1
+                              ? "s"
+                              : ""}
+                        </strong>
+                      </p>
+
+                      {bonusPopup.gameStreakBonus > 0 ? (
+                          <p className="bonus-earned">
+                            🎉 You earned +
+                            {bonusPopup.gameStreakBonus}{" "}
+                            streak bonus points!
+                          </p>
+                      ) : (
+                          <p>
+                            Complete{" "}
+                            {3 - bonusPopup.gameStreak} more game
+                            {3 - bonusPopup.gameStreak !== 1
+                                ? "s"
+                                : ""}{" "}
+                            to earn the 3 game streak bonus.
+                          </p>
+                      )}
+                    </div>
+
+                    <div className="bonus-popup-section">
+                      <strong>Daily Bonus</strong>
+
+                      <p>
+                        Daily streak:{" "}
+                        <strong>
+                          {bonusPopup.dailyStreak} day
+                          {bonusPopup.dailyStreak !== 1
+                              ? "s"
+                              : ""}
+                        </strong>
+                      </p>
+
+                      {bonusPopup.dailyBonusEarned ? (
+                          <p className="bonus-earned">
+                            🎉 You received +
+                            {bonusPopup.dailyBonus} daily bonus
+                            points!
+                          </p>
+                      ) : (
+                          <p>
+                            You already received your daily bonus
+                            today.
+                          </p>
+                      )}
+                    </div>
+
+                    <button
+                        className="bonus-popup-ok"
+                        onClick={() => setBonusPopup(null)}
+                    >
+                      OK
+                    </button>
+                  </div>
+                </div>
+            )}
 
           </div>
 
