@@ -676,7 +676,7 @@ function App() {
             </div>
 
             <button
-                className="speak-button"
+                className="restart-button"
                 onClick={restartChallenge}
             >
               🔄 Start Again

@@ -31,10 +31,10 @@ body {
 }
 
 .zero-percent-section {
-  margin-top: 25px;
+  margin-top: 50px;
   padding: 25px 30px;
 
-  background: #ffffff;
+  background: lightblue;
   border-radius: 20px;
 
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
@@ -503,19 +503,31 @@ button:disabled {
 
 .leaderboard-section {
   margin-top: 25px;
+  margin-left: 25px;
   padding: 20px;
   background: #f8f9fa;
   border-radius: 15px;
 }
 
 .leaderboard-section h2 {
-  margin-top: 0;
-  margin-bottom: 10px;
+  margin-bottom: 30px;
+  margin-left: 20px;
 }
 
 .leaderboard-info {
   font-size: 14px;
   margin-bottom: 15px;
+}
+
+.restart-button {
+  background: #ffcc80;
+  font-size: 14px;
+  margin-bottom: 15px;
+  margin-left: 60px;
+}
+
+.restart-button:hover {
+  background: mediumspringgreen;
 }
 
 .submit-score-button {
@@ -538,7 +550,7 @@ button:disabled {
 }
 
 .leaderboard-message {
-  margin-top: 15px;
+  margin-top: 20px;
   padding: 12px;
   background: #e8f5e9;
   color: #2e7d32 !important;
