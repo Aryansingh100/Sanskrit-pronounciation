@@ -6,13 +6,18 @@ import {
     setDoc,
     addDoc,
     collection,
-    serverTimestamp
+    serverTimestamp,
+    updateDoc
 } from "../firebase-config";
 
 const GAME_ID = "sanskritPronunciation";
 const GAME_NAME = "Sanskrit Pronunciation";
+const DAILY_BONUS_START = 20;
+const DAILY_BONUS_MIDDLE = 30;
+const DAILY_BONUS_MAX = 40;
 
-const LEADERBOARD_COLLECTION = "leaderboard-zatamgame";
+const LEADERBOARD_COLLECTION =
+    "leaderboard-zatamgame";
 
 export async function postScore(
     currentUser,
@@ -22,42 +27,95 @@ export async function postScore(
     const firebaseUser = auth.currentUser;
 
     if (!firebaseUser) {
-        console.error("No Firebase user is currently signed in.");
+        console.error(
+            "No Firebase user is currently signed in."
+        );
+
         return false;
     }
 
     try {
+
         const today = new Date()
             .toISOString()
             .split("T")[0];
 
-/*        console.log("STEP 1: Writing game-completions...");
+        const yesterday = new Date();
 
-        console.log("CURRENT USER:", currentUser);
-        console.log("CURRENT USER UID:", currentUser?.uid);
-        console.log("CURRENT USER EMAIL:", currentUser?.email);
+        yesterday.setUTCDate(
+            yesterday.getUTCDate() - 1
+        );
 
-        await addDoc(
-            collection(db, "game-completions"),
-            {
-                userId: currentUser.uid,
-                playerName:
-                    currentUser.displayName || "Player",
-                email: currentUser.email || "",
-                gameId: GAME_ID,
-                gameName: GAME_NAME,
-                score: finalScore,
-                timePlayedInSeconds:
-                timePlayedInSeconds,
-                completedAt: serverTimestamp()
+        const yesterdayString =
+            yesterday.toISOString().split("T")[0];
+
+        let newDailyStreak = existingDailyStreak;
+        let dailyBonus = 0;
+        let dailyBonusEarned = false;
+
+        // DAILY BONUS
+
+        if (lastPlayedDate === today) {
+
+            // Player already completed a game today.
+            // Do not give another daily bonus.
+
+            newDailyStreak = existingDailyStreak;
+
+            console.log(
+                "Daily bonus already received today."
+            );
+
+        } else {
+
+            dailyBonusEarned = true;
+
+            if (
+                lastPlayedDate === yesterdayString
+            ) {
+
+                newDailyStreak =
+                    existingDailyStreak + 1;
+
+            } else {
+
+                // First day or player missed a day
+                newDailyStreak = 1;
             }
-        );
 
-        console.log(
-            "STEP 1 SUCCESS: game-completions"
-        );
 
- */
+            // =========================================
+            // DETERMINE BONUS AMOUNT
+            // =========================================
+
+            if (newDailyStreak >= 6) {
+
+                dailyBonus = DAILY_BONUS_MAX;
+
+            } else if (newDailyStreak >= 3) {
+
+                dailyBonus = DAILY_BONUS_MIDDLE;
+
+            } else {
+
+                dailyBonus = DAILY_BONUS_START;
+            }
+
+
+            console.log(
+                "Daily streak:",
+                newDailyStreak
+            );
+
+            console.log(
+                "Daily bonus:",
+                dailyBonus
+            );
+        }
+
+        // =========================================
+        // DAILY LEADERBOARD
+        // =========================================
 
         const dailyRecordId =
             `${currentUser.uid}_${GAME_ID}_${today}`;
@@ -69,15 +127,11 @@ export async function postScore(
         );
 
         console.log(
-            "STEP 2: Reading daily leaderboard..."
+            "STEP 1: Reading daily leaderboard..."
         );
 
         const existingDaily =
             await getDoc(dailyScoreRef);
-
-        console.log(
-            "STEP 2 SUCCESS: Reading daily leaderboard"
-        );
 
         const existingDailyScore =
             existingDaily.exists()
@@ -98,7 +152,7 @@ export async function postScore(
             timePlayedInSeconds;
 
         console.log(
-            "STEP 3: Writing daily leaderboard..."
+            "STEP 2: Writing daily leaderboard..."
         );
 
         await setDoc(dailyScoreRef, {
@@ -117,8 +171,13 @@ export async function postScore(
         });
 
         console.log(
-            "STEP 3 SUCCESS: Daily leaderboard"
+            "STEP 2 SUCCESS: Daily leaderboard"
         );
+
+
+        // =========================================
+        // ALL-TIME LEADERBOARD
+        // =========================================
 
         const allTimeRecordId =
             `${currentUser.uid}_${GAME_ID}_alltime`;
@@ -130,15 +189,11 @@ export async function postScore(
         );
 
         console.log(
-            "STEP 4: Reading all-time leaderboard..."
+            "STEP 3: Reading all-time leaderboard..."
         );
 
         const existingAllTime =
             await getDoc(allTimeScoreRef);
-
-        console.log(
-            "STEP 4 SUCCESS: Reading all-time leaderboard"
-        );
 
         const existingAllTimeScore =
             existingAllTime.exists()
@@ -151,15 +206,65 @@ export async function postScore(
                 .timePlayedInSeconds || 0
                 : 0;
 
+        const existingStreak =
+            existingAllTime.exists()
+                ? existingAllTime.data().streak || 0
+                : 0;
+
+        const existingDailyStreak =
+            existingAllTime.exists()
+                ? existingAllTime.data().dailyStreak || 0
+                : 0;
+
+        const lastPlayedDate =
+            existingAllTime.exists()
+                ? existingAllTime.data().lastPlayedDate || null
+                : null;
+
         const newAllTimeScore =
-            existingAllTimeScore + finalScore;
+            existingAllTimeScore +
+            finalScore;
 
         const newAllTimeTime =
             existingAllTimeTime +
             timePlayedInSeconds;
 
+        // =========================================
+        // CALCULATE NEW STREAK
+        // =========================================
+
+        let newStreak =
+            existingStreak + 1;
+
+        const streakCompleted =
+            newStreak === 3;
+
+        if (streakCompleted) {
+            newStreak = 0;
+        }
+
         console.log(
-            "STEP 5: Writing all-time leaderboard..."
+            "Previous streak:",
+            existingStreak
+        );
+
+        console.log(
+            "New streak:",
+            newStreak
+        );
+
+        console.log(
+            "Streak completed:",
+            streakCompleted
+        );
+
+
+        // =========================================
+        // WRITE ALL-TIME SCORE
+        // =========================================
+
+        console.log(
+            "STEP 4: Writing all-time leaderboard..."
         );
 
         await setDoc(allTimeScoreRef, {
@@ -174,12 +279,84 @@ export async function postScore(
             score: newAllTimeScore,
             timePlayedInSeconds: newAllTimeTime,
             scoreDate: "all-time",
+            streak: newStreak,
+            dailyStreak: newDailyStreak,
+            lastPlayedDate: dailyBonusEarned ? today : lastPlayedDate,
             updatedAt: serverTimestamp()
         });
 
         console.log(
-            "STEP 5 SUCCESS: All-time leaderboard"
+            "STEP 4 SUCCESS: All-time leaderboard"
         );
+
+        // =========================================
+        // DAILY BONUS
+        // =========================================
+
+        if (dailyBonusEarned) {
+
+            console.log(
+                `Daily bonus earned: +${dailyBonus}`
+            );
+
+            await updateDoc(
+                dailyScoreRef,
+                {
+                    score:
+                        newDailyScore +
+                        dailyBonus
+                }
+            );
+
+            await updateDoc(
+                allTimeScoreRef,
+                {
+                    score:
+                        newAllTimeScore +
+                        dailyBonus,
+
+                    dailyStreak:
+                    newDailyStreak,
+
+                    lastPlayedDate:
+                    today
+                }
+            );
+
+            console.log(
+                "Daily bonus successfully added:",
+                dailyBonus
+            );
+        }
+        // =========================================
+        // STREAK BONUS
+        // =========================================
+
+        if (streakCompleted) {
+
+            console.log(
+                "3 GAME STREAK! Adding +30 bonus."
+            );
+
+            await updateDoc(
+                dailyScoreRef,
+                {
+                    score: newDailyScore + 30
+                }
+            );
+
+            await updateDoc(
+                allTimeScoreRef,
+                {
+                    score: newAllTimeScore + 30,
+                    streak: 0
+                }
+            );
+
+            console.log(
+                "STEP 5 SUCCESS: +30 streak bonus"
+            );
+        }
 
         return true;
 
@@ -191,7 +368,13 @@ export async function postScore(
         );
 
         console.error(
-            "Permission error occurred during one of the steps above."
+            "Error code:",
+            error?.code
+        );
+
+        console.error(
+            "Error message:",
+            error?.message
         );
 
         throw error;
